@@ -177,7 +177,20 @@ init python:
     ## subdirectories, and "**.psd" matches psd files anywhere in the project.
 
     ## Classify files as None to exclude them from the built distributions.
+    # 1. Force the rendering engine to clean frames with 0% opacity transparency
+    config.gl_clear_color = "#00000000"
+    config.gl_resize = False
 
+    # 2. Force SDL backend environmental variables to allow alpha pipelines
+    import os
+    os.environ["RENPY_RGBA_WINDOW"] = "1"
+    os.environ["SDL_GL_ALPHA_SIZE"] = "8"
+    
+    # Linux-specific X11 composition synchronization
+    PLATFORM_LINUX = sys.platform.startswith('linux')
+    if PLATFORM_LINUX:
+        os.environ["SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR"] = "0"
+        os.environ["SDL_VIDEODRIVER"] = "x11"
     build.classify('**~', None)
     build.classify('**.bak', None)
     build.classify('**/.**', None)
