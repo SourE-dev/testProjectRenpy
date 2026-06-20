@@ -1,0 +1,43 @@
+# Initialize the manager
+init python:
+    wm = WindowManager()
+
+label start:
+    # 1. Start the ticker screen so the manager can function
+    python:
+        wm.start()
+
+    "WindowManager initialized. Moving window now..."
+
+    # 2. Test Linear Movement
+    "Moving to top-left (100, 100) using linear movement (speed 20)."
+    python:
+        wm.move(100, 100, mode="linear", speed=20.0)
+    
+    # Wait for the move to finish
+    $ renpy.pause(2.0, hard=True)
+
+    # 3. Test Gliding (Interpolation)
+    "Gliding to the center of the screen over 2 seconds."
+    $ wm.center(mode="glide", time=2.0)
+    $ renpy.pause(2, hard=True)
+
+    # 4. Test Snapping
+    "Testing snap: attempting to move to (-500, -500), should be clamped to 0,0."
+    $ wm.move(-500, -500, snap=True)
+    $ renpy.pause(1.0, hard=True)
+
+    # 5. Test Lockout
+    "Locking the window. You should not be able to move it via script."
+    python:
+        wm.locked = True
+        wm.move(500, 500) # This should fail silently
+    
+    "Attempted to move while locked. Nothing happened."
+    
+    python:
+        wm.locked = False
+        wm.move(200, 200, mode="teleport")
+
+    "Test complete."
+    return
