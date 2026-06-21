@@ -1,38 +1,53 @@
 ﻿label start:
-    "System Test Initiated: Advanced Options."
+    "System Test Initiated."
 
-    # 1. Test Dynamic Scaling and Positioning
-    "Spawning a large, centered fireball..."
+    # 1. PERSISTENT: Spawning a fireball that should survive dialogue
     python:
-        eid1 = update_companion_state(
-            "Big Fireball", 
-            effect=EFFECT_FIREBALL, 
+        update_companion_state(
+            "Persistent Fireball", 
+            effect=EFFECT_FIREBALL,
             cleanup=CLEANUP_MANUAL, 
-            scale_w=256, 
-            scale_h=256
+            logical_id="fireball_main", 
+            scale_w=256, scale_h=256
         )
 
-    # 2. Test Click-Through functionality
-    "Spawning a click-through persistent window in the top-left..."
+    "The fireball should be on screen now. Try rolling back to 'System Test Initiated' and coming forward again."
+    "If working correctly, the fireball will NOT flicker or redraw."
+
+    # 2. PERSISTENT: Spawning a ghost window
     python:
-        eid2 = update_companion_state(
-            "I am ghost-like and unclickable", 
-            effect=EFFECT_DEFAULT, 
+        update_companion_state(
+            "Ghost Window", 
+            effect=EFFECT_DEFAULT,
             cleanup=CLEANUP_MANUAL, 
-            click_through=True, 
-            pos=(100, 100)
+            logical_id="ghost_window", 
+            click_through=True, pos=(100, 100)
         )
 
-    "You can now click through the second window to interact with the game UI behind it."
+    "Now we have two persistent windows."
 
-    # 3. Test Manual Cleanup of dynamic objects
-    "Clearing all states now..."
-    $ remove_companion_state(eid1)
-    $ remove_companion_state(eid2)
+    # 3. TRANSIENT (One-off): Spawning a window WITHOUT a logical_id
+    python:
+        # Since this has no logical_id, it is NOT rollback-safe.
+        # If you rollback past this line, it will spawn a NEW ID/window.
+        update_companion_state(
+            "I am a Transient (One-off) window!", 
+            effect=EFFECT_SYSTEM
+        )
 
-    "Testing complete."
+    "Look at the screen. You should see three windows total."
+    "Roll back to the previous line: 'Now we have two persistent windows.'"
+    
+    "If you rolled back, the 'Transient' window should have vanished,"
+    "while the 'Fireball' and 'Ghost' windows stayed perfectly still."
+
+    # Cleanup persistent windows
+    python:
+        remove_companion_state_by_logic("fireball_main")
+        remove_companion_state_by_logic("ghost_window")
+
+    "Persistence test complete."
     return
-
 label after_rollback:
     # This automatically runs whenever the user rolls back.
     # It tells the Companion to clear any stuck windows.

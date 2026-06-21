@@ -64,7 +64,7 @@ class MessageWindow(QWidget):
         self.update() 
 
     def paintEvent(self, event):
-        print("DEBUG: PaintEvent running...") # Add this
+        # print("DEBUG: PaintEvent running...") # Add this
         if self.sprite_frame:
             painter = QPainter(self)
             painter.drawPixmap(0, 0, self.sprite_frame)
