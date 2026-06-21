@@ -26,3 +26,4 @@
 /strings.json
 /game_events.json
 .vscode/
+__pycache__/
