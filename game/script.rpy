@@ -1,34 +1,36 @@
 ﻿label start:
-    "System Test Initiated."
+    "System Test Initiated: Advanced Options."
 
-    "Test 1: Multi-Instance Handling (Immediate Cleanup)"
-    "Spawning two fireball instances..."
-    # Fireballs use CLEANUP_IMMEDIATE, so they clear on the next interaction
-    $ eid1 = update_companion_state("Fireball 1!", effect=EFFECT_FIREBALL, cleanup=CLEANUP_IMMEDIATE)
-    $ eid2 = update_companion_state("Fireball 2!", effect=EFFECT_FIREBALL, cleanup=CLEANUP_IMMEDIATE)
-    
-    # Because they are CLEANUP_IMMEDIATE, the next line click will trigger 
-    # process_cleanup_after_interaction and wipe them.
-    "Two windows should have appeared. They will vanish when you click to continue."
+    # 1. Test Dynamic Scaling and Positioning
+    "Spawning a large, centered fireball..."
+    python:
+        eid1 = update_companion_state(
+            "Big Fireball", 
+            effect=EFFECT_FIREBALL, 
+            cleanup=CLEANUP_MANUAL, 
+            scale_w=256, 
+            scale_h=256
+        )
 
-    "Test 2: Persistent State & Manual Clear"
-    # Using CLEANUP_MANUAL means they stay until you explicitly remove them
-    $ eid = update_companion_state("I am persistent.", effect=EFFECT_DEFAULT, cleanup=CLEANUP_MANUAL)
-    "A window is visible. Clearing manually now..."
-    $ remove_companion_state(eid)
-    "Window should be gone."
+    # 2. Test Click-Through functionality
+    "Spawning a click-through persistent window in the top-left..."
+    python:
+        eid2 = update_companion_state(
+            "I am ghost-like and unclickable", 
+            effect=EFFECT_DEFAULT, 
+            cleanup=CLEANUP_MANUAL, 
+            click_through=True, 
+            pos=(100, 100)
+        )
 
-    "Test 3: Rollback & Automatic Cleanup Simulation"
-    "Spawning a persistent window that will survive interaction..."
-    $ eid = update_companion_state("Rollback/Cleanup Test", effect=EFFECT_SYSTEM, cleanup=CLEANUP_MANUAL)
-    
-    "If you rollback now (Mouse Wheel Up), the window should disappear."
-    "Because the state is tracked by Ren'Py, the companion will undo the spawn."
-    
-    "Finally, clearing all states..."
-    $ clear_companion_states()
-    "All windows should be gone."
-    
+    "You can now click through the second window to interact with the game UI behind it."
+
+    # 3. Test Manual Cleanup of dynamic objects
+    "Clearing all states now..."
+    $ remove_companion_state(eid1)
+    $ remove_companion_state(eid2)
+
+    "Testing complete."
     return
 
 label after_rollback:
