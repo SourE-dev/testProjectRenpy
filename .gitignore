@@ -27,3 +27,5 @@
 /game_events.json
 .vscode/
 __pycache__/
+/game/code/companion/user_custom_effects.json
+/game/code/companion/*log
