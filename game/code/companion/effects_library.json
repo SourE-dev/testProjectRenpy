@@ -1,0 +1,11 @@
+{
+  "fireball": {
+    "class": "animated",
+    "sprite_path": "images/sprites/red_fireball.png",
+    "frame_w": 32,
+    "frame_h": 32,
+    "cols": 2,
+    "total_frames": 2,
+    "movement_type": "cosine"
+  }
+}

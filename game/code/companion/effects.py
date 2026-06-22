@@ -75,6 +75,7 @@ class BaseEffect:
         widget.close()
 
 class AnimatedEffect(BaseEffect):
+    # Default values, can be overridden by subclasses or options
     FRAME_W = 32
     FRAME_H = 32
     DISPLAY_W = 32 
@@ -168,12 +169,3 @@ class AnimatedEffect(BaseEffect):
         widget.update_frame(self.frames[self.current_frame])
         self.current_frame = (self.current_frame + 1) % self.TOTAL_FRAMES
 
-
-class FireballEffect(AnimatedEffect):
-    SPRITE_PATH = "images/sprites/red_fireball.png"
-    FRAME_W = 32
-    FRAME_H = 32
-    DISPLAY_W = 128
-    DISPLAY_H = 128
-    COLS = 2
-    TOTAL_FRAMES = 2
