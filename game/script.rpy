@@ -1,75 +1,73 @@
 ﻿label start:
-    "System Test Initiated."
+    "Testing the new fireball variants."
+    $ fireball_img = "images/sprites/red_fireball.png"
 
-    # 1. TEST: Linear Movement Strategy
-    # We now pass the type constant and a parameters dictionary.
-    python:
-        update_companion_state(
-            "Moving Fireball (Linear Strategy)",
-            effect=EFFECT_FIREBALL,
-            cleanup=CLEANUP_MANUAL,
-            logical_id="fireball_move",
-            movement_type=MOVE_LINEAR,
-            movement_params={
-                "start_pos": (100, 100),
-                "end_pos": (800, 500),
-                "speed": 5
-            }
-        )
+    # 1. Define Effects (Registration)
+    $ define_animated_effect(
+        "fast_fireball", 
+        fireball_img, 
+        frame_w=32, frame_h=32, 
+        cols=2, total_frames=2,
+        movement_type="linear"
+    )
 
-    "The fireball should be moving using the LinearMovement strategy."
-    "Try rolling back and coming forward; the state will persist correctly."
-    $ remove_companion_state_by_logic("fireball_move")
-    # 2. TEST: Cosine Movement Strategy
-    python:
-        update_companion_state(
-            "Wavy Fireball",
-            effect=EFFECT_FIREBALL,
-            cleanup=CLEANUP_MANUAL,
-            logical_id="fireball_wave",
-            movement_type=MOVE_COSINE,
-            movement_params={
-                "start_x": 0,
-                "end_x": 1000,
-                "amplitude": 50,
-                "frequency": 0.05
-            }
-        )
+    $ define_animated_effect(
+        "curved_fireball", 
+        fireball_img, 
+        frame_w=32, frame_h=32, 
+        cols=2, total_frames=2,
+        movement_type="cosine"
+    )
 
-    # 3. PERSISTENT: Ghost Window
-    python:
-        update_companion_state(
-            "Ghost Window",
-            effect=EFFECT_DEFAULT,
-            cleanup=CLEANUP_MANUAL,
-            logical_id="ghost_window",
-            click_through=True,
-            pos=(100, 100)
-        )
+    $ define_static_effect(
+        "big_fireball_icon", 
+        fireball_img
+    )
 
-    "Three persistent elements are active."
+    "We are so ready!"
 
-    # 4. TRANSIENT (One-off)
-    python:
-        update_companion_state(
-            "I am a Transient (One-off) window!",
-            effect=EFFECT_SYSTEM
-        )
+    # Test the linear projectile
+    $ show_effect(
+        "Launching Projectile!",
+        effect="fast_fireball",
+        logical_id="fireball_1",
+        movement_params={"start_pos": (0, 300), "end_pos": (1200, 300), "speed": 40},
+        scale_w=128, scale_h=128
+    )
+    
+    "The fireball is active now."
+    
+    # Manually hide it before proceeding
+    $ hide_effect("fireball_1")
+    "Fireball 1 hidden."
+    
+    # Test the curved magic effect
+    $ show_effect(
+        "Magic Curving!",
+        effect="curved_fireball",
+        logical_id="fireball_2",
+        movement_params={"start_pos": (200, 0), "end_pos": (800, 600), "speed": 15},
+        scale_w=256, scale_h=256
+    )
+    
+    "Registration and effects verified."
+    $ hide_effect("fireball_2")
+    "Fireball 2 hidden."
 
-    "Look at the screen. You should see four windows total."
-    "Roll back to: 'Three persistent elements are active.'"
-
-    "If working correctly, the Transient window should vanish upon rollback."
-
-    # Cleanup persistent windows
-    python:
-        
-        remove_companion_state_by_logic("fireball_wave")
-        remove_companion_state_by_logic("ghost_window")
-
-    "Persistence test complete."
+    # Test the third fireball
+    $ show_effect(
+        "Launching Projectile!",
+        effect="fast_fireball",
+        logical_id="fireball_3",
+        movement_params={"start_pos": (0, 300), "end_pos": (1200, 300), "speed": 40},
+        scale_w=128, scale_h=128
+    )
+    
+    "Cool. Now clearing all manually."
+    $ clear_all_effects()
+    "Great   "
     return
 
 label after_rollback:
-    $ send_event(None, clear=True)
+    $ clear_all_effects()
     return

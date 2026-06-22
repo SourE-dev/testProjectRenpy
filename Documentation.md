@@ -1,186 +1,78 @@
-# Ren'Py-to-PyQt Companion System Documentation
+# Companion Effect System API
 
-This documentation outlines the architecture and methods for your **Ren'Py-to-PyQt Companion System**.
+The Companion System allows you to trigger UI effects, animations, and projectiles from Ren'Py scripts on a separate, overlay-friendly window.
 
-This system uses a file-based event synchronization bridge to allow Ren'Py to spawn and control persistent or transient UI elements in an external PyQt6 application.
+## 1. Setup & Initialization
+Effects must be registered in an `init python` block before they can be used in the script.
 
----
-
-# 1. Architectural Overview
-
-The system operates as a decoupled **Producer-Consumer** model:
-
-## Producer (Ren'Py)
-
-Manages the game state and writes updates to a shared `game_events.json` file.
-
-## Consumer (PyQt6)
-
-A background watcher monitors the JSON file. When it detects a change, it updates the UI by spawning, moving, or closing windows accordingly.
+### Registering Effects
+* **`define_animated_effect(name, image_path, frame_w, frame_h, **kwargs)`**
+    * Registers a repeating animated sprite.
+    * `name`: Unique string ID (used in `show_effect`).
+    * `frame_w/h`: Pixel dimensions of a single frame on the sheet.
+    * `cols`: Number of columns in your sprite sheet.
+    * `total_frames`: Total number of frames to cycle through.
+* **`define_static_effect(name, image_path, **kwargs)`**
+    * Registers a static (non-animated) image.
 
 ---
 
-# 2. Ren'Py Methods (`events.rpy`)
+## 2. Writer API (`show_effect`)
+Use this in your Ren'Py labels to trigger UI elements.
 
-These functions are used within your game script to control companion windows.
+$ show_effect(
+    msg="Optional text", 
+    effect="name_of_registered_effect", 
+    logical_id="unique_id", 
+    **options
+)
 
-| Method                                        | Purpose                                                                                                                         |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `update_companion_state(...)`                 | The primary entry point. Spawns or updates a window. If a `logical_id` is provided, the window is persistent and rollback-safe. |
-| `remove_companion_state_by_logic(logical_id)` | Removes a specific persistent window by its logical name.                                                                       |
-| `clear_companion_states()`                    | Wipes all active windows from the screen immediately.                                                                           |
+### Parameters
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `msg` | String | The text label (if using a static/basic effect). |
+| `effect` | String | The name used when registering the effect. |
+| `logical_id` | String | A unique ID used for tracking, updating, or hiding this instance. |
+| `scale_w/h` | Int | Target resolution for the effect on screen (e.g., 128x128). |
+| `click_through` | Bool | If `True`, the window ignores mouse clicks. |
+| `auto_hide` | Bool | If `True`, the window closes automatically when movement finishes. |
 
-## Key Parameters for `update_companion_state`
+### Movement Parameters
+If using `movement_type` ("linear" or "cosine"), provide a `movement_params` dictionary:
 
-| Parameter    | Description                                                                     |
-| ------------ | ------------------------------------------------------------------------------- |
-| `msg`        | The string text to display.                                                     |
-| `effect`     | Selects the visual style (`EFFECT_FIREBALL`, `EFFECT_SYSTEM`, etc.).            |
-| `cleanup`    | Defines lifecycle (`CLEANUP_MANUAL` vs `CLEANUP_IMMEDIATE`).                    |
-| `logical_id` | A unique string key for persistent windows. Omit for one-off transient windows. |
-| `kwargs`     | Passes extra settings (e.g., `pos=(100, 100)`, `scale_w=256`).                  |
-
----
-
-# 3. Automatic Cleanup Logic
-
-The system uses a **Generation-Based** approach to handle `CLEANUP_IMMEDIATE` windows, ensuring they vanish when the player progresses without deleting themselves instantly.
-
-## `cleanup_immediate(name=None)`
-
-This function is hooked into:
-
-```python
-config.interact_callbacks
-```
-
-It compares the current game statement line:
-
-```python
-renpy.get_filename_line()
-```
-
-with:
-
-```python
-last_processed_statement
-```
-
-### The Rule
-
-A window is only deleted if the game has moved to a new statement line.
-
-This prevents the window from vanishing during the same frame in which it was created.
+* **Linear:** `movement_params={"start_pos": (x, y), "end_pos": (x, y), "speed": int}`
+* **Cosine (Curved):** `movement_params={"start_pos": (x, y), "end_pos": (x, y), "amplitude": 50, "frequency": 0.05, "speed": 15}`
 
 ---
 
-# 4. PyQt6 Methods (`companion.py`)
-
-The Companion engine handles rendering and OS-level window management.
-
-## Main Classes
-
-### `Companion`
-
-The main controller.
-
-Uses `watchdog` to monitor `game_events.json` for file-system changes and triggers `process_events()` whenever modifications are detected.
-
-### `MessageWindow`
-
-A custom `QWidget` representing an individual companion UI element.
-
-Applies window flags for:
-
-* Always On Top
-* Frameless Window Styling
-
-### `AnimatedEffect`
-
-Handles sprite-sheet loading and frame-by-frame animation via `QThreadPool` for non-blocking UI performance.
+## 3. Controlling Effects
+* **`hide_effect(logical_id)`**: Removes a specific effect instance by its `logical_id`.
+* **`clear_all_effects()`**: Immediately wipes every active effect from the companion screen.
 
 ---
 
-## The Sync Pipeline
-
-### 1. Ren'Py Writes State
-
-```text
-game_events.json
-```
-
-### 2. Watchdog Detects Change
-
-The file modification event is captured by the watcher.
-
-### 3. Process Events
-
-```python
-process_events()
-```
-
-reads the JSON state and executes:
-
-```python
-sync_windows()
-```
-
-### 4. Window Synchronization
-
-#### Garbage Collection
-
-Closes any windows whose `id` is no longer present in the JSON state.
-
-#### Spawning
-
-Instantiates new `MessageWindow` objects for any new IDs found in the JSON.
+## 4. Best Practices
+1.  **Unique IDs:** Always provide a `logical_id` to ensure you can reference the effect later.
+2.  **Rollback Safety:** The system automatically syncs with Ren'Py's rollback. You do not need to manually handle effects after a player scrolls back.
+3.  **Debouncing:** The system is throttled to ~20 updates per second. While this is invisible to the user, ensure your `show_effect` calls are logical and not placed inside standard 60FPS loops.
+4.  **Performance:** If using `AnimatedEffect`, always define `scale_w` and `scale_h` to ensure the C++ backend handles image scaling efficiently.
 
 ---
 
-# 5. Best Practices
+## Example Usage
+label start:
+    # 1. Register
+    $ define_animated_effect("fast_fireball", "images/sprites/red_fireball.png", frame_w=32, frame_h=32, cols=2, total_frames=2, movement_type="linear")
 
-## Rollback Safety
-
-Always provide a `logical_id` for windows you want to persist across rollbacks.
-
-Without a `logical_id`, the system treats the window as a new instance each time the player rolls backward and forward through game history.
-
-## Resource Management
-
-For animations, always use the `AnimatedEffect` class.
-
-It offloads image processing to background threads, preventing UI stuttering during animation initialization.
-
-## Cleanup Strategy
-
-### Use `CLEANUP_MANUAL`
-
-For:
-
-* Major character dialogue windows
-* Persistent HUD elements
-* UI components you intend to manage explicitly
-
-### Use `CLEANUP_IMMEDIATE`
-
-For:
-
-* Temporary notifications
-* Status popups
-* One-shot visual effects
-
----
-
-# Summary
-
-The Ren'Py-to-PyQt Companion System provides a robust bridge between game logic and external desktop UI components using a file-based synchronization model.
-
-Key benefits include:
-
-* Rollback-safe persistent windows
-* Decoupled Ren'Py and PyQt architectures
-* Automatic lifecycle management
-* Threaded animation rendering
-* Real-time JSON-based synchronization
-
-This design allows complex desktop companion interfaces to coexist with Ren'Py gameplay while remaining responsive, maintainable, and rollback-friendly.
+    # 2. Trigger
+    $ show_effect(
+        "Launching Projectile!",
+        effect="fast_fireball",
+        logical_id="fireball_1",
+        movement_params={"start_pos": (0, 300), "end_pos": (1200, 300), "speed": 40},
+        scale_w=128, scale_h=128
+    )
+    
+    # 3. Clean up
+    $ hide_effect("fireball_1")
+    return

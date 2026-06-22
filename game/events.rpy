@@ -2,116 +2,98 @@ default companion_active_states = []
 default companion_registry = {} 
 
 init -1 python:
-    import json, time, threading, uuid, queue, shutil, logging, sys
-
+    import json, uuid, logging, socket, time
+    
     # Configure logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("Companion")
-    logger.info("Initializing Companion Event System...")
+    logger.info("Initializing Companion Event System (Debounced/Manual)...")
 
     # Constants
-    CLEANUP_IMMEDIATE = "immediate"
-    CLEANUP_MANUAL = "manual"
-    EFFECT_FIREBALL = "fireball"
-    EFFECT_SYSTEM = "system"
     EFFECT_DEFAULT = "default"
     MOVE_LINEAR = "linear"
     MOVE_COSINE = "cosine"
+    DEBOUNCE_INTERVAL = 0.05  # 50ms throttle to prevent socket flooding
+    
+    last_sent_time = 0
 
-    # Use the module itself to hold the queue, so it isn't part of Ren'Py's save data
-    module = sys.modules[__name__]
-    if not hasattr(module, "_event_queue"):
-        module._event_queue = queue.Queue()
+    def send_event(event_type=None, name=None, data=None, clear=False):
+        global last_sent_time
         
-    last_processed_statement = None
-
-    def send_event(states=None, clear=False):
-        new_payload = {"type": "clear_all"} if clear else {"type": "update", "data": list(companion_active_states)}
-        
-        # Check against last_payload stored on the function itself (this is safe from pickling)
-        if hasattr(send_event, "last_payload") and send_event.last_payload == new_payload:
+        # 1. Debounce Logic: Skip rapid-fire spam, but allow 'clear' commands
+        current_time = time.time()
+        if not clear and (current_time - last_sent_time) < DEBOUNCE_INTERVAL:
             return
-        
-        send_event.last_payload = new_payload
-        logger.info(f"Queuing event: {new_payload['type']}")
-        module._event_queue.put(new_payload)
+        last_sent_time = current_time
 
-    def writer_loop():
-        events_file = os.path.join(config.gamedir, "code", "companion", "game_events.json")
-        temp_file = events_file + ".tmp"
-        logger.info("Writer thread started.")
+        active_states = getattr(renpy.store, "companion_active_states", [])
         
-        while True:
-            cmd = module._event_queue.get()
-            while not module._event_queue.empty():
-                try: cmd = module._event_queue.get_nowait()
-                except: break
-            
-            try:
-                with open(temp_file, "w") as f:
-                    json.dump(cmd, f)
-                    f.flush()
-                    os.fsync(f.fileno())
-                shutil.move(temp_file, events_file)
-            except Exception as e:
-                logger.error(f"Writer error: {e}")
-            module._event_queue.task_done()
-
-    # Helper functions
-    def update_companion_state(msg, effect=EFFECT_DEFAULT, cleanup=CLEANUP_IMMEDIATE, logical_id=None, **kwargs):
-        renpy.retain_after_load() 
-        
-        if logical_id:
-            new_registry = companion_registry.copy()
-            if logical_id not in new_registry:
-                new_registry[logical_id] = str(uuid.uuid4())
-            companion_registry.update(new_registry)
-            final_eid = companion_registry[logical_id]
+        if clear:
+            new_payload = {"event_type": "clear_all"}
+        elif event_type == "register_effect":
+            new_payload = {"event_type": "register_effect", "name": name, "data": data}
         else:
-            final_eid = str(uuid.uuid4())
-        
-        new_state = {"id": final_eid, "msg": msg, "effect": effect, "cleanup": cleanup, "options": kwargs}
-        
-        existing = next((s for s in companion_active_states if s['id'] == final_eid), None)
-        if existing and existing == new_state:
-            return final_eid
+            new_payload = {"event_type": "update", "data": list(active_states)}
             
+        # Optional: Prevent redundant network traffic
+        if hasattr(send_event, "last_payload") and send_event.last_payload == new_payload and not clear:
+            return
+        send_event.last_payload = new_payload
+        
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.1) # Tightened timeout to prevent game stutter
+            s.connect(('127.0.0.1', 12345))
+            s.sendall(json.dumps(new_payload).encode('utf-8'))
+            s.close()
+            logger.info(f"Event sent via TCP: {new_payload['event_type']}")
+        except Exception as e:
+            logger.warning(f"Companion not connected: {e}")
+
+    # Writer-Facing API
+    def show_effect(msg, effect=EFFECT_DEFAULT, logical_id=None, **kwargs):
+        """Displays an effect on screen. Must be hidden manually."""
+        final_eid = logical_id if logical_id else str(uuid.uuid4())
+        
+        new_state = {
+            "logical_id": final_eid, 
+            "msg": msg, 
+            "effect": effect, 
+            "options": kwargs
+        }
+        
+        # Replace existing if logical_id is reused
+        existing = next((s for s in companion_active_states if s['logical_id'] == final_eid), None)
         if existing: companion_active_states.remove(existing)
+            
         companion_active_states.append(new_state)
-        logger.info(f"State updated: {logical_id or final_eid}")
+        logger.info(f"Effect shown: {final_eid}")
         send_event() 
         return final_eid
 
-    def remove_companion_state(eid):
-        companion_active_states[:] = [s for s in companion_active_states if s['id'] != eid]
-        logger.info(f"State removed: {eid}")
-        send_event()
-    def remove_companion_state_by_logic(logical_id):
-        global companion_registry
-        if logical_id in companion_registry:
-            eid = companion_registry.pop(logical_id)
-            remove_companion_state(eid)
-            logger.info(f"Logic state removed: {logical_id}")
+    def hide_effect(logical_id):
+        """Removes an effect by its logical_id."""
+        global companion_active_states
+        
+        initial_len = len(companion_active_states)
+        companion_active_states[:] = [s for s in companion_active_states if s['logical_id'] != logical_id]
+        
+        if len(companion_active_states) < initial_len:
+            logger.info(f"Effect hidden: {logical_id}")
+            send_event()
+        else:
+            logger.warning(f"Attempted to hide non-existent effect: {logical_id}")
 
-    def cleanup_immediate(name=None):
-        global last_processed_statement
-        immediate_states = [s for s in companion_active_states if s.get("cleanup") == CLEANUP_IMMEDIATE]
-        if immediate_states:
-            current_statement = renpy.get_filename_line()
-            if last_processed_statement and last_processed_statement != current_statement:
-                companion_active_states[:] = [s for s in companion_active_states if s.get("cleanup") != CLEANUP_IMMEDIATE]
-                logger.info("Transient states cleared via immediate cleanup.")
-                send_event()
-            last_processed_statement = current_statement
+    def clear_all_effects():
+        """Force wipes all effects from the companion screen."""
+        global companion_active_states
+        companion_active_states[:] = []
+        logger.info("All effects cleared manually.")
+        send_event(clear=True)
+
+    # Rollback/Load Sync: Ensure companion matches the game timeline
+    def sync_companion_after_rollback():
+        send_event()
 
     config.after_default_callbacks.append(lambda: send_event())
-    config.interact_callbacks.append(cleanup_immediate)
-
-label splashscreen:
-    python:
-        # Check if the thread is already running without storing the object in the store
-        if not any(thread.name == "writer_thread" for thread in threading.enumerate()):
-            logger.info("Spawning writer thread.")
-            # Start the thread directly without assigning it to a variable
-            threading.Thread(target=writer_loop, name="writer_thread", daemon=True).start()
-    return
+    # config.after_rollback_callbacks.append(sync_companion_after_rollback)
