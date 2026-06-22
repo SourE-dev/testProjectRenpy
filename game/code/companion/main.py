@@ -1,35 +1,17 @@
 import sys
 import json
-import time
 import win32gui
 import os
-import ctypes
-from ctypes import wintypes
-
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QObject
 from PyQt6.QtGui import QPixmap, QPainter
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+# Local imports
+import config
+from utils import log_debug
 from effects import AnimatedEffect, BaseEffect, FireballEffect
-
-# --- Configuration & Constants ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
-EVENTS_FILE = os.path.join(BASE_DIR, "game_events.json")
-LOG_FILE = os.path.join(BASE_DIR, "companion.log")
-GAME_WINDOW_TITLE = "testProject"
-ENUM_CURRENT_SETTINGS = -1
-
-
-# --- Helper Functions ---
-def log_debug(msg):
-    """Writes a timestamped message to the log file and prints to console."""
-    timestamp = time.strftime("%H:%M:%S")
-    formatted = f"[{timestamp}] {msg}"
-    with open(LOG_FILE, "a") as f: f.write(formatted + "\n")
-    print(formatted)
-
 
 # --- UI Components ---
 class MessageWindow(QWidget):
@@ -39,7 +21,8 @@ class MessageWindow(QWidget):
         super().__init__()
         self.options = options or {} # Defaults to empty dict
         self.effect = self.EFFECT_REGISTRY.get(effect, BaseEffect)(options=options)
-        
+        #  Now to enable qtransparency and click-through, we need to set the appropriate window flags and attributes.
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         # 2. Window flags
         if self.options.get("click_through", False):
             flags = Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | \
@@ -64,8 +47,7 @@ class MessageWindow(QWidget):
         self.update() 
 
     def paintEvent(self, event):
-        # print("DEBUG: PaintEvent running...") # Add this
-        if self.sprite_frame:
+        if self.sprite_frame and not self.sprite_frame.isNull(): # ADDED NULL CHECK
             painter = QPainter(self)
             painter.drawPixmap(0, 0, self.sprite_frame)
         else:
@@ -75,7 +57,7 @@ class MessageWindow(QWidget):
         base_style = """
             QLabel {
                 padding: 20px; border-radius: 15px; font-size: 20px; font-weight: bold;
-                background-color: rgba(30, 30, 30, 200); border: 2px solid #555555; color: white;
+                background-color: rgba(30, 30, 30, 255); border: 2px solid #555555; color: white;
             }
         """
         layout = QVBoxLayout()
@@ -112,7 +94,7 @@ class Companion(QWidget):
         self.signal = EventSignal()
         self.signal.trigger.connect(self.process_events)
         self.observer = Observer()
-        self.observer.schedule(FileChangeHandler(self.signal), BASE_DIR, recursive=False)
+        self.observer.schedule(FileChangeHandler(self.signal), config.BASE_DIR, recursive=False)
         self.observer.start()
         
         # Health Monitor
@@ -125,15 +107,15 @@ class Companion(QWidget):
         found = False
         def enum_handler(hwnd, lparam):
             nonlocal found
-            if win32gui.GetWindowText(hwnd).startswith(GAME_WINDOW_TITLE): found = True
+            if win32gui.GetWindowText(hwnd).startswith(config.GAME_WINDOW_TITLE): found = True
         win32gui.EnumWindows(enum_handler, None)
         if not found: log_debug("Warning: Game window not detected.")
 
     def process_events(self):
         """Parses the JSON state file and synchronizes active UI windows."""
         try:
-            if not os.path.exists(EVENTS_FILE): return
-            with open(EVENTS_FILE, "r") as f: content = f.read()
+            if not os.path.exists(config.EVENTS_FILE): return
+            with open(config.EVENTS_FILE, "r") as f: content = f.read()
             if not content or content == self.last_content: return
             
             cmd_package = json.loads(content)
@@ -169,26 +151,44 @@ class Companion(QWidget):
                     options=options
                 )
 
-    def clear_single_message(self, eid):
-        if eid in self.active_messages:
-            self.active_messages[eid].close()
-            del self.active_messages[eid]
-            log_debug(f"Closed window: {eid}") # LOGGING RESTORED
-
     def clear_all_messages(self):
-        for eid in list(self.active_messages.keys()): self.clear_single_message(eid)
+        # We use a list to iterate, but clear_single_message handles the removal
+        # individually. This is clean and correct.
+        for eid in list(self.active_messages.keys()):
+            self.clear_single_message(eid)
+
+    def clear_single_message(self, eid):
+        # Using pop safely retrieves and removes the item in one step
+        widget = self.active_messages.pop(eid, None)
+        if widget:
+            # Safely call cleanup (now that BaseEffect supports it)
+            if hasattr(widget.effect, 'cleanup'):
+                widget.effect.cleanup(widget)
+            widget.hide()
+            widget.deleteLater()
+            log_debug(f"Closed window: {eid}")
 
 if __name__ == "__main__":
-    # 1. Enable hardware acceleration (Supported in PyQt6)
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
     
-    # NOTE: AA_EnableHighDpiScaling is removed in PyQt6 because 
-    # it is now the default behavior of the framework.
-
     app = QApplication(sys.argv)
     
-    # 2. Create the instance
-    companion = Companion()
-    
-    # 3. Standard execution
-    sys.exit(app.exec())
+    # We use a try-except block to catch Python-level crashes
+    try:
+        companion = Companion()
+        # app.exec() starts the main event loop
+        # The return code is captured here
+        exit_code = app.exec()
+        sys.exit(exit_code)
+        
+    except Exception as e:
+        # This will catch errors during initialization or runtime 
+        # that aren't caught by internal class try/excepts
+        log_debug(f"CRITICAL APPLICATION CRASH: {e}")
+        
+        # Optionally, write the full traceback to a file for review
+        import traceback
+        with open("crash_report.txt", "w") as f:
+            f.write(traceback.format_exc())
+            
+        sys.exit(1)

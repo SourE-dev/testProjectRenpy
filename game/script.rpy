@@ -1,66 +1,75 @@
 ﻿label start:
     "System Test Initiated."
 
-    # 1. PERSISTENT: Spawning a fireball that should survive dialogue
+    # 1. TEST: Linear Movement Strategy
+    # We now pass the type constant and a parameters dictionary.
     python:
         update_companion_state(
-            "Persistent Fireball", 
+            "Moving Fireball (Linear Strategy)",
             effect=EFFECT_FIREBALL,
-            cleanup=CLEANUP_MANUAL, 
-            logical_id="fireball_main", 
-            scale_w=256, scale_h=256
+            cleanup=CLEANUP_MANUAL,
+            logical_id="fireball_move",
+            movement_type=MOVE_LINEAR,
+            movement_params={
+                "start_pos": (100, 100),
+                "end_pos": (800, 500),
+                "speed": 5
+            }
         )
 
-    "The fireball should be on screen now. Try rolling back to 'System Test Initiated' and coming forward again."
-    "If working correctly, the fireball will NOT flicker or redraw."
-
-    # 2. PERSISTENT: Spawning a ghost window
+    "The fireball should be moving using the LinearMovement strategy."
+    "Try rolling back and coming forward; the state will persist correctly."
+    $ remove_companion_state_by_logic("fireball_move")
+    # 2. TEST: Cosine Movement Strategy
     python:
         update_companion_state(
-            "Ghost Window", 
+            "Wavy Fireball",
+            effect=EFFECT_FIREBALL,
+            cleanup=CLEANUP_MANUAL,
+            logical_id="fireball_wave",
+            movement_type=MOVE_COSINE,
+            movement_params={
+                "start_x": 0,
+                "end_x": 1000,
+                "amplitude": 50,
+                "frequency": 0.05
+            }
+        )
+
+    # 3. PERSISTENT: Ghost Window
+    python:
+        update_companion_state(
+            "Ghost Window",
             effect=EFFECT_DEFAULT,
-            cleanup=CLEANUP_MANUAL, 
-            logical_id="ghost_window", 
-            click_through=True, pos=(100, 100)
+            cleanup=CLEANUP_MANUAL,
+            logical_id="ghost_window",
+            click_through=True,
+            pos=(100, 100)
         )
 
-    "Now we have two persistent windows."
+    "Three persistent elements are active."
 
-    # 3. TRANSIENT (One-off): Spawning a window WITHOUT a logical_id
+    # 4. TRANSIENT (One-off)
     python:
-        # Since this has no logical_id, it is NOT rollback-safe.
-        # If you rollback past this line, it will spawn a NEW ID/window.
         update_companion_state(
-            "I am a Transient (One-off) window!", 
+            "I am a Transient (One-off) window!",
             effect=EFFECT_SYSTEM
         )
 
-    "Look at the screen. You should see three windows total."
-    "Roll back to the previous line: 'Now we have two persistent windows.'"
-    
-    "If you rolled back, the 'Transient' window should have vanished,"
-    "while the 'Fireball' and 'Ghost' windows stayed perfectly still."
+    "Look at the screen. You should see four windows total."
+    "Roll back to: 'Three persistent elements are active.'"
+
+    "If working correctly, the Transient window should vanish upon rollback."
 
     # Cleanup persistent windows
     python:
-        remove_companion_state_by_logic("fireball_main")
+        
+        remove_companion_state_by_logic("fireball_wave")
         remove_companion_state_by_logic("ghost_window")
 
     "Persistence test complete."
     return
-label after_rollback:
-    # This automatically runs whenever the user rolls back.
-    # It tells the Companion to clear any stuck windows.
-    $ send_event(None, clear=True)
-    return
-label test_companion_logic:
-    # Test 1: Immediate cleanup
-    $ update_companion_state("This should vanish on next click", cleanup=CLEANUP_IMMEDIATE)
-    "Click to test cleanup." 
 
-    # Test 2: Persistent manual state
-    $ eid = update_companion_state("This should stay", cleanup=CLEANUP_MANUAL)
-    "Still here."
-    $ remove_companion_state(eid)
-    "Gone now."
+label after_rollback:
+    $ send_event(None, clear=True)
     return

@@ -1,26 +1,25 @@
-import os
-from PyQt6.QtCore import QRunnable, QObject, QThreadPool, pyqtSignal, QRect, Qt
+from PyQt6.QtCore import QRunnable, QObject, pyqtSignal, QRect, Qt
 from PyQt6.QtGui import QPixmap
 
 class WorkerSignals(QObject):
     finished = pyqtSignal(list)
 
 class ImageLoader(QRunnable):
-    def __init__(self, effect):
+    def __init__(self, effect, asset_path_func):
         super().__init__()
         self.effect = effect
+        self.asset_path_func = asset_path_func # Pass the function as a dependency
         self.signals = WorkerSignals()
 
     def run(self):
-        # We need to access get_asset_path from the effect's module or define it here
-        # Assuming you want to keep the helper logic consistent:
-        from effects import get_asset_path 
+        # 1. REMOVE the 'from effects import get_asset_path'
+        # Importing inside a thread can lead to circular import issues.
+        # Use a passed-in function instead.
         
-        raw_sheet = QPixmap(get_asset_path(self.effect.SPRITE_PATH))
+        raw_sheet = QPixmap(self.asset_path_func(self.effect.SPRITE_PATH))
         frames = []
         
         for i in range(self.effect.TOTAL_FRAMES):
-            # The simplified math
             col = i % self.effect.COLS
             row = i // self.effect.COLS
             
@@ -37,13 +36,3 @@ class ImageLoader(QRunnable):
             frames.append(scaled)
             
         self.signals.finished.emit(frames)
-# Then in your AnimatedEffect:
-    def start_animation(self, widget):
-        loader = ImageLoader(self)
-        loader.signals.finished.connect(lambda frames: self.on_frames_ready(frames, widget))
-        QThreadPool.globalInstance().start(loader)
-
-    def on_frames_ready(self, frames, widget):
-        self.frames = frames
-        # Now start the timer
-        self.frame_timer.start(self.FRAME_INTERVAL_MS)
