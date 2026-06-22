@@ -1,21 +1,31 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter
-
+from utils import log_debug # Ensure this is imported
 # Corrected Imports
-from widgets.registry import get_effect_class
-from widgets.base import BaseEffect
-from widgets.effects import AnimatedEffect # Import this for isinstance check
+from registry import get_effect_class
+from base import BaseEffect
+from effects import AnimatedEffect # Import this for isinstance check
 
 class MessageWindow(QWidget):
     def __init__(self, text, effect="default", options=None):
         super().__init__()
         self.options = options or {}
+        self.is_active = True
+        # 1. Fetch config first to find out what "class" it is
+        # Note: You need a way to access get_effect_config here.
+        # You might need to pass the config object in, or use a global helper.
+        from registry import get_effect_class # Ensure this is your registry import
         
-  
-        effect_class = get_effect_class(effect) 
-        self.effect = effect_class(options=options)
+        # 2. Determine the class based on the "class" key in options
+        # Since final_options is already merged, it contains 'class': 'animated'
+        class_type = self.options.get("class", "basic") 
+        effect_class = get_effect_class(class_type) 
         
+        log_debug(f"DEBUG: Selected class {class_type} -> {effect_class}")
+        
+        self.effect = effect_class(options=self.options)
+   
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
         # Window flags logic
@@ -29,12 +39,18 @@ class MessageWindow(QWidget):
         
         self.sprite_frame = None 
 
-        if isinstance(self.effect, AnimatedEffect):
+        effect_type_name = self.effect.__class__.__name__
+        is_animated = (effect_type_name == "AnimatedEffect")
+
+        log_debug(f"DEBUG: Effect type name is: {effect_type_name}")
+        
+        if is_animated:
+            log_debug(f"DEBUG: window_base.py sees DISPLAY_W as {self.effect.DISPLAY_W}")
             self.setFixedSize(self.effect.DISPLAY_W, self.effect.DISPLAY_H)
             self.setLayout(QVBoxLayout())
         else:
+            log_debug(f"DEBUG: Falling back to setup_ui for effect '{effect}'")
             self.setup_ui(text)
-            
         self.show()
         self.effect.start_animation(self)
 

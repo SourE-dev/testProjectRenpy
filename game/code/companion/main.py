@@ -7,6 +7,7 @@ from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QPainter
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 from PyQt6.QtNetwork import QTcpServer, QHostAddress
+from PyQt6 import sip
 # Local imports
 import config
 from utils import log_debug
@@ -32,7 +33,7 @@ class Companion(QWidget):
         self.watchdog = QTimer(self)
         self.watchdog.timeout.connect(self.check_game_health)
         self.watchdog.start(3000)
-    def get_effect_config(effect_name):
+    def get_effect_config(self, effect_name):
         # 1. Load Custom Effects
         try:
             with open("user_custom_effects.json", "r") as f:
@@ -53,17 +54,40 @@ class Companion(QWidget):
     def process_packet(self, socket):
         raw_data = socket.readAll().data()
         try:
-            cmd_package = json.loads(raw_data.decode('utf-8'))
-            cmd_type = cmd_package.get("type")
+            # 1. Log raw data for verification
+            decoded_data = raw_data.decode('utf-8')
+            # log_debug(f"DEBUG: Raw Packet: {decoded_data}") # Uncomment if needed
+            
+            cmd_package = json.loads(decoded_data)
+            cmd_type = cmd_package.get("event_type")
+            
+            log_debug(f"DEBUG: Processing event: {cmd_type}")
             
             if cmd_type == "clear_all": 
                 self.clear_all_messages()
             elif cmd_type == "update": 
-                self.sync_windows(cmd_package.get("data", []))
+                data = cmd_package.get("data", [])
+                
+                # 2. Structural Debugging
+                if not isinstance(data, list):
+                    log_debug(f"ERROR: 'data' field is not a list! Found: {type(data)}")
+                else:
+                    for idx, item in enumerate(data):
+                        if not isinstance(item, dict):
+                            log_debug(f"ERROR: Data item {idx} is not a dict: {item}")
+                        elif 'logical_id' not in item:
+                            log_debug(f"ERROR: Data item {idx} missing 'logical_id'. Keys found: {list(item.keys())}")
+                
+                self.sync_windows(data)
+                
             elif cmd_type == "register_effect": 
                 self.save_custom_effect(cmd_package.get("name"), cmd_package.get("data"))
+                
         except Exception as e:
+            # 3. Enhanced Exception Debugging
+            import traceback
             log_debug(f"Packet error: {e}")
+            log_debug(f"Traceback: {traceback.format_exc()}")
         finally:
             socket.disconnectFromHost()
             socket.deleteLater()
@@ -78,48 +102,58 @@ class Companion(QWidget):
             log_debug("Warning: Game window not detected.")
 
     def sync_windows(self, target_states):
-        target_ids = {s['id'] for s in target_states if isinstance(s, dict)}
+        # 1. Identify what the game wants to be active
+        target_ids = {s['logical_id'] for s in target_states if isinstance(s, dict)}
         
-        # Kill windows not in the new state
+        # 2. Cleanup: Delete anything not in the new target list
+        # This handles both explicit hide_effect() calls AND rollback state reverts
         for eid in list(self.active_messages.keys()):
-            if eid not in target_ids: 
+            if eid not in target_ids:
+                log_debug(f"DEBUG: Sync removing expired window: {eid}")
                 self.clear_single_message(eid)
         
-        # Spawn new windows
+        # 3. Spawn: Create only what is missing
         for s in target_states:
-            eid = s['id']
-            if eid not in self.active_messages:
-                log_debug(f"Spawning window: {eid}")
+            eid = s['logical_id']
+            if eid in self.active_messages:
+                continue
                 
-                # --- NEW DATA-DRIVEN MERGE LOGIC ---
-                effect_name = s.get("effect", "default")
-                user_overrides = s.get("options", {})
-                
-                # 1. Fetch library defaults
-                library_defaults = self.get_effect_config(effect_name)
-                
-                # 2. Merge (Overrides beat Defaults)
-                final_options = {**library_defaults, **user_overrides}
-                
-                # 3. Spawn with merged options
-                self.active_messages[eid] = MessageWindow(
-                    s['msg'], 
-                    effect=effect_name, 
-                    options=final_options
-                )
+            effect_name = s.get("effect", "default")
+            user_overrides = s.get("options", {})
+            
+            library_defaults = self.get_effect_config(effect_name)
+            final_options = {**library_defaults, **user_overrides}
+            
+            if "image_path" not in final_options:
+                continue
+
+            self.active_messages[eid] = MessageWindow(
+                s['msg'], 
+                effect=effect_name, 
+                options=final_options
+            )
 
     def clear_all_messages(self):
         for eid in list(self.active_messages.keys()):
             self.clear_single_message(eid)
 
+    # In Companion class (main.py)
     def clear_single_message(self, eid):
+        # 1. Remove from dictionary first so it's no longer "Active"
         widget = self.active_messages.pop(eid, None)
-        if widget:
-            if hasattr(widget, 'effect') and hasattr(widget.effect, 'cleanup'):
+        
+        # 2. Use a safe check to ensure the object exists in Python before interacting
+        if widget is not None and not sip.isdeleted(widget):
+            # Stop the internal timers first
+            if hasattr(widget, 'effect'):
                 widget.effect.cleanup(widget)
+            
+            # Use deleteLater() which is thread-safe and deferred
             widget.hide()
             widget.deleteLater()
             log_debug(f"Closed window: {eid}")
+        else:
+            log_debug(f"Skipping cleanup for {eid}: Already deleted or None")
     def save_custom_effect(self, name, data):
         # 1. Load existing custom effects
         try:

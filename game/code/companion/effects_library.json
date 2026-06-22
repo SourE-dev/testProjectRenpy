@@ -1,7 +1,7 @@
 {
   "fireball": {
     "class": "animated",
-    "sprite_path": "images/sprites/red_fireball.png",
+    "image_path": "images/sprites/red_fireball.png",
     "frame_w": 32,
     "frame_h": 32,
     "cols": 2,
