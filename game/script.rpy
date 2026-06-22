@@ -1,29 +1,4 @@
 ﻿label start:
-    "Testing the new fireball variants."
-    $ fireball_img = "images/sprites/red_fireball.png"
-
-    # 1. Define Effects (Registration)
-    $ define_animated_effect(
-        "fast_fireball", 
-        fireball_img, 
-        frame_w=32, frame_h=32, 
-        cols=2, total_frames=2,
-        movement_type="linear"
-    )
-
-    $ define_animated_effect(
-        "curved_fireball", 
-        fireball_img, 
-        frame_w=32, frame_h=32, 
-        cols=2, total_frames=2,
-        movement_type="cosine"
-    )
-
-    $ define_static_effect(
-        "big_fireball_icon", 
-        fireball_img
-    )
-
     "We are so ready!"
 
     # Test the linear projectile
@@ -65,9 +40,8 @@
     
     "Cool. Now clearing all manually."
     $ clear_all_effects()
-    "Great   "
+    "Great"
     return
-
 label after_rollback:
     $ clear_all_effects()
     return

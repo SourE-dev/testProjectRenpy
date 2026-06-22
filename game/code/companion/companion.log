@@ -10382,3 +10382,547 @@ QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
 [18:57:58] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
 [18:57:58] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
 [18:57:58] Moving widget to: (0, 300)
+[19:16:32] Warning: Game window not detected.
+[19:16:37] Companion Server listening on 127.0.0.1:12345
+[19:16:39] Warning: Game window not detected.
+[19:16:42] Warning: Game window not detected.
+[19:16:45] Warning: Game window not detected.
+[19:16:48] Warning: Game window not detected.
+[19:16:51] Warning: Game window not detected.
+[19:16:54] Warning: Game window not detected.
+[19:16:57] Warning: Game window not detected.
+[19:17:00] Warning: Game window not detected.
+[19:17:03] Warning: Game window not detected.
+[19:17:06] Warning: Game window not detected.
+[19:17:09] Warning: Game window not detected.
+[19:17:12] Warning: Game window not detected.
+[19:17:15] Warning: Game window not detected.
+[19:17:18] Warning: Game window not detected.
+[19:17:21] Warning: Game window not detected.
+[19:17:24] Warning: Game window not detected.
+[19:17:27] Warning: Game window not detected.
+[19:17:30] Warning: Game window not detected.
+[19:17:33] Warning: Game window not detected.
+[19:17:36] Warning: Game window not detected.
+[19:17:39] Warning: Game window not detected.
+[19:17:42] Warning: Game window not detected.
+[19:17:45] Warning: Game window not detected.
+[19:17:48] Warning: Game window not detected.
+[19:17:51] Warning: Game window not detected.
+[19:17:54] Warning: Game window not detected.
+[19:17:57] Warning: Game window not detected.
+[19:18:00] Warning: Game window not detected.
+[19:18:03] Warning: Game window not detected.
+[19:18:06] Warning: Game window not detected.
+[19:18:09] Warning: Game window not detected.
+[19:18:12] Warning: Game window not detected.
+[19:18:15] Warning: Game window not detected.
+[19:18:18] Warning: Game window not detected.
+[19:18:21] Warning: Game window not detected.
+[19:18:24] Warning: Game window not detected.
+[19:18:27] Warning: Game window not detected.
+[19:18:30] Warning: Game window not detected.
+[19:18:33] Warning: Game window not detected.
+[19:18:36] Warning: Game window not detected.
+[19:18:39] Warning: Game window not detected.
+[19:18:42] Warning: Game window not detected.
+[19:18:45] Warning: Game window not detected.
+[19:18:48] Warning: Game window not detected.
+[19:18:51] Warning: Game window not detected.
+[19:18:54] Warning: Game window not detected.
+[19:18:57] Warning: Game window not detected.
+[19:19:00] Warning: Game window not detected.
+[19:19:03] Warning: Game window not detected.
+[19:19:06] Warning: Game window not detected.
+[19:19:09] Warning: Game window not detected.
+[19:19:12] Warning: Game window not detected.
+[19:19:15] Warning: Game window not detected.
+[19:19:18] Warning: Game window not detected.
+[19:19:21] Warning: Game window not detected.
+[19:19:24] Warning: Game window not detected.
+[19:19:27] Warning: Game window not detected.
+[19:19:30] DEBUG: Processing event: update
+[19:20:09] Warning: Game window not detected.
+[19:20:12] Warning: Game window not detected.
+[19:20:15] Warning: Game window not detected.
+[19:20:18] Warning: Game window not detected.
+[19:20:21] Warning: Game window not detected.
+[19:20:24] Warning: Game window not detected.
+[19:20:25] DEBUG: Processing event: update
+[19:20:27] DEBUG: Processing event: update
+[19:20:27] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:27] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:27] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:27] DEBUG: Effect type name is: AnimatedEffect
+[19:20:27] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:27] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:27] DEBUG: Sheet size: 64x32
+[19:20:27] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:27] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:27] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:27] Moving widget to: (0, 300)
+[19:20:27] DEBUG: Processing event: update
+[19:20:27] DEBUG: Sync removing expired window: fireball_1
+[19:20:27] Skipping cleanup for fireball_1: Already deleted or None
+[19:20:28] DEBUG: Processing event: update
+[19:20:28] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:28] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:28] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:28] DEBUG: Effect type name is: AnimatedEffect
+[19:20:28] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:28] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:28] DEBUG: Sheet size: 64x32
+[19:20:28] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:28] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:28] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:28] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:28] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:28] get_start_pos returning: (200, -41)
+[19:20:28] Moving widget to: (200, 0)
+[19:20:28] DEBUG: Processing event: update
+[19:20:28] DEBUG: Sync removing expired window: fireball_2
+[19:20:28] Closed window: fireball_2
+[19:20:28] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:28] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:28] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:28] DEBUG: Effect type name is: AnimatedEffect
+[19:20:28] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:28] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:28] DEBUG: Sheet size: 64x32
+[19:20:28] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:28] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:28] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:28] Moving widget to: (0, 300)
+[19:20:28] DEBUG: Processing event: update
+[19:20:28] DEBUG: Sync removing expired window: fireball_1
+[19:20:28] Closed window: fireball_1
+[19:20:29] DEBUG: Processing event: update
+[19:20:29] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:29] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:29] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:29] DEBUG: Effect type name is: AnimatedEffect
+[19:20:29] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:29] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:29] DEBUG: Sheet size: 64x32
+[19:20:29] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:29] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:29] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:29] Moving widget to: (0, 300)
+[19:20:29] DEBUG: Processing event: update
+[19:20:29] DEBUG: Sync removing expired window: fireball_1
+[19:20:29] Closed window: fireball_1
+[19:20:29] DEBUG: Processing event: update
+[19:20:29] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:29] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:29] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:29] DEBUG: Effect type name is: AnimatedEffect
+[19:20:29] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:29] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:29] DEBUG: Sheet size: 64x32
+[19:20:29] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:29] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:29] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:29] Moving widget to: (0, 300)
+[19:20:29] DEBUG: Processing event: clear_all
+[19:20:29] Closed window: fireball_3
+[19:20:29] DEBUG: Processing event: update
+[19:20:31] DEBUG: Processing event: update
+[19:20:31] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:31] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:31] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:31] DEBUG: Effect type name is: AnimatedEffect
+[19:20:31] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:31] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:31] DEBUG: Sheet size: 64x32
+[19:20:31] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:31] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:31] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:31] Moving widget to: (0, 300)
+[19:20:31] DEBUG: Processing event: update
+[19:20:31] DEBUG: Sync removing expired window: fireball_1
+[19:20:31] Closed window: fireball_1
+[19:20:31] DEBUG: Processing event: update
+[19:20:31] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:31] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:31] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:31] DEBUG: Effect type name is: AnimatedEffect
+[19:20:31] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:31] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:31] DEBUG: Sheet size: 64x32
+[19:20:31] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:31] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:31] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:31] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:31] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:31] get_start_pos returning: (200, -41)
+[19:20:31] Moving widget to: (200, 0)
+[19:20:32] DEBUG: Processing event: update
+[19:20:32] DEBUG: Sync removing expired window: fireball_2
+[19:20:32] Closed window: fireball_2
+[19:20:32] DEBUG: Processing event: update
+[19:20:32] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:32] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:32] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:32] DEBUG: Effect type name is: AnimatedEffect
+[19:20:32] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:32] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:32] DEBUG: Sheet size: 64x32
+[19:20:32] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:32] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:32] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:32] Moving widget to: (0, 300)
+[19:20:33] DEBUG: Processing event: update
+[19:20:33] DEBUG: Sync removing expired window: fireball_3
+[19:20:33] Skipping cleanup for fireball_3: Already deleted or None
+[19:20:33] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:33] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:33] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:33] DEBUG: Effect type name is: AnimatedEffect
+[19:20:33] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:33] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:33] DEBUG: Sheet size: 64x32
+[19:20:33] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:33] DEBUG: Processing event: update
+[19:20:33] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:33] DEBUG: Sync removing expired window: fireball_2
+[19:20:33] Closed window: fireball_2
+[19:20:33] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:33] DEBUG: Widget <window_base.MessageWindow object at 0x0000020FBDBE0D70> was destroyed before frames loaded. Ignoring.
+[19:20:33] DEBUG: Processing event: update
+[19:20:33] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:33] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:33] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:33] DEBUG: Effect type name is: AnimatedEffect
+[19:20:33] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:33] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:33] DEBUG: Sheet size: 64x32
+[19:20:33] DEBUG: Processing event: update
+[19:20:33] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:33] DEBUG: Sync removing expired window: fireball_1
+[19:20:33] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:33] Closed window: fireball_1
+[19:20:33] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:33] DEBUG: Widget <window_base.MessageWindow object at 0x0000020FBDBE0EB0> was destroyed before frames loaded. Ignoring.
+[19:20:33] DEBUG: Processing event: update
+[19:20:33] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:33] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:33] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:33] DEBUG: Effect type name is: AnimatedEffect
+[19:20:33] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:33] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:33] DEBUG: Sheet size: 64x32
+[19:20:33] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:33] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:33] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:33] Moving widget to: (0, 300)
+[19:20:33] DEBUG: Processing event: update
+[19:20:33] DEBUG: Sync removing expired window: fireball_1
+[19:20:33] Closed window: fireball_1
+[19:20:33] DEBUG: Processing event: update
+[19:20:33] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:33] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:33] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:33] DEBUG: Effect type name is: AnimatedEffect
+[19:20:33] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:33] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:33] DEBUG: Sheet size: 64x32
+[19:20:33] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:33] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:33] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:33] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:33] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:33] get_start_pos returning: (200, -41)
+[19:20:33] Moving widget to: (200, 0)
+[19:20:33] DEBUG: Processing event: update
+[19:20:33] DEBUG: Sync removing expired window: fireball_2
+[19:20:33] Closed window: fireball_2
+[19:20:34] DEBUG: Processing event: update
+[19:20:34] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:34] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:34] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:34] DEBUG: Effect type name is: AnimatedEffect
+[19:20:34] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:34] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:34] DEBUG: Sheet size: 64x32
+[19:20:34] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:34] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:34] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:34] Moving widget to: (0, 300)
+[19:20:34] DEBUG: Processing event: update
+[19:20:34] DEBUG: Sync removing expired window: fireball_1
+[19:20:34] Closed window: fireball_1
+[19:20:34] DEBUG: Processing event: update
+[19:20:34] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:34] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:34] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:34] DEBUG: Effect type name is: AnimatedEffect
+[19:20:34] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:34] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:34] DEBUG: Sheet size: 64x32
+[19:20:34] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:34] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:34] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:34] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:34] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:34] get_start_pos returning: (200, -41)
+[19:20:34] Moving widget to: (200, 0)
+[19:20:34] DEBUG: Processing event: update
+[19:20:34] DEBUG: Sync removing expired window: fireball_2
+[19:20:34] Closed window: fireball_2
+[19:20:34] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:34] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:34] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:34] DEBUG: Effect type name is: AnimatedEffect
+[19:20:34] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:34] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:34] DEBUG: Sheet size: 64x32
+[19:20:34] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:34] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:34] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:34] Moving widget to: (0, 300)
+[19:20:34] DEBUG: Processing event: update
+[19:20:34] DEBUG: Sync removing expired window: fireball_1
+[19:20:34] Closed window: fireball_1
+[19:20:34] DEBUG: Processing event: update
+[19:20:34] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:34] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:34] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:34] DEBUG: Effect type name is: AnimatedEffect
+[19:20:34] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:34] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:34] DEBUG: Sheet size: 64x32
+[19:20:34] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:34] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:34] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:34] Moving widget to: (0, 300)
+[19:20:34] DEBUG: Processing event: update
+[19:20:34] DEBUG: Sync removing expired window: fireball_1
+[19:20:34] Closed window: fireball_1
+[19:20:34] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:34] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:34] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:34] DEBUG: Effect type name is: AnimatedEffect
+[19:20:34] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:34] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:34] DEBUG: Sheet size: 64x32
+[19:20:34] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:34] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:34] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:34] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:34] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:34] get_start_pos returning: (200, -41)
+[19:20:34] Moving widget to: (200, 0)
+[19:20:35] DEBUG: Processing event: update
+[19:20:35] DEBUG: Sync removing expired window: fireball_2
+[19:20:35] Closed window: fireball_2
+[19:20:35] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:35] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:35] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:35] DEBUG: Effect type name is: AnimatedEffect
+[19:20:35] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:35] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:35] DEBUG: Sheet size: 64x32
+[19:20:35] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:35] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:35] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:35] Moving widget to: (0, 300)
+[19:20:35] DEBUG: Processing event: update
+[19:20:35] DEBUG: Sync removing expired window: fireball_3
+[19:20:35] Closed window: fireball_3
+[19:20:35] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:35] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:35] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:35] DEBUG: Effect type name is: AnimatedEffect
+[19:20:35] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:35] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:35] DEBUG: Sheet size: 64x32
+[19:20:35] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:35] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:35] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:35] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:35] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:35] get_start_pos returning: (200, -41)
+[19:20:35] Moving widget to: (200, 0)
+[19:20:35] DEBUG: Processing event: update
+[19:20:35] DEBUG: Sync removing expired window: fireball_2
+[19:20:35] Closed window: fireball_2
+[19:20:35] DEBUG: Processing event: update
+[19:20:35] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:35] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:35] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:35] DEBUG: Effect type name is: AnimatedEffect
+[19:20:35] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:35] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:35] DEBUG: Sheet size: 64x32
+[19:20:35] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:35] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:35] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:35] Moving widget to: (0, 300)
+[19:20:35] DEBUG: Processing event: update
+[19:20:35] DEBUG: Sync removing expired window: fireball_1
+[19:20:35] Closed window: fireball_1
+[19:20:35] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:35] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:35] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:35] DEBUG: Effect type name is: AnimatedEffect
+[19:20:35] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:35] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:35] DEBUG: Sheet size: 64x32
+[19:20:35] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:35] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:35] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:35] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:35] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:35] get_start_pos returning: (200, -41)
+[19:20:35] Moving widget to: (200, 0)
+[19:20:35] DEBUG: Processing event: update
+[19:20:35] DEBUG: Sync removing expired window: fireball_2
+[19:20:35] Closed window: fireball_2
+[19:20:35] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:35] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:35] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:35] DEBUG: Effect type name is: AnimatedEffect
+[19:20:35] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:35] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:35] DEBUG: Sheet size: 64x32
+[19:20:35] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:35] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:35] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:35] Moving widget to: (0, 300)
+[19:20:36] DEBUG: Processing event: update
+[19:20:36] DEBUG: Sync removing expired window: fireball_3
+[19:20:36] Closed window: fireball_3
+[19:20:36] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:36] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:36] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:36] DEBUG: Effect type name is: AnimatedEffect
+[19:20:36] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:36] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:36] DEBUG: Sheet size: 64x32
+[19:20:36] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:36] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:36] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:36] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:36] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:36] get_start_pos returning: (200, -41)
+[19:20:36] Moving widget to: (200, 0)
+[19:20:36] DEBUG: Processing event: update
+[19:20:36] DEBUG: Sync removing expired window: fireball_2
+[19:20:36] Closed window: fireball_2
+[19:20:36] DEBUG: Processing event: update
+[19:20:36] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:36] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:36] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:36] DEBUG: Effect type name is: AnimatedEffect
+[19:20:36] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:36] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:36] DEBUG: Sheet size: 64x32
+[19:20:36] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:36] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:36] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:36] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:36] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:36] get_start_pos returning: (200, -41)
+[19:20:36] Moving widget to: (200, 0)
+[19:20:36] DEBUG: Processing event: update
+[19:20:36] DEBUG: Sync removing expired window: fireball_2
+[19:20:36] Closed window: fireball_2
+[19:20:36] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:36] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:36] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:36] DEBUG: Effect type name is: AnimatedEffect
+[19:20:36] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:36] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:36] DEBUG: Sheet size: 64x32
+[19:20:36] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:36] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:36] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:36] Moving widget to: (0, 300)
+[19:20:36] DEBUG: Processing event: update
+[19:20:36] DEBUG: Sync removing expired window: fireball_3
+[19:20:36] Closed window: fireball_3
+[19:20:36] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:36] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:36] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:36] DEBUG: Effect type name is: AnimatedEffect
+[19:20:36] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:36] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:36] DEBUG: Sheet size: 64x32
+[19:20:36] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:36] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:36] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:36] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:36] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:36] get_start_pos returning: (200, -41)
+[19:20:36] Moving widget to: (200, 0)
+[19:20:36] DEBUG: Processing event: update
+[19:20:36] DEBUG: Sync removing expired window: fireball_2
+[19:20:36] Closed window: fireball_2
+[19:20:37] DEBUG: Processing event: update
+[19:20:37] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:37] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:37] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:37] DEBUG: Effect type name is: AnimatedEffect
+[19:20:37] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:37] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:37] DEBUG: Sheet size: 64x32
+[19:20:37] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:37] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:37] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:37] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:37] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:37] get_start_pos returning: (200, -41)
+[19:20:37] Moving widget to: (200, 0)
+[19:20:37] DEBUG: Processing event: update
+[19:20:37] DEBUG: Sync removing expired window: fireball_2
+[19:20:37] Closed window: fireball_2
+[19:20:37] DEBUG: Processing event: update
+[19:20:37] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:37] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:37] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:37] DEBUG: Effect type name is: AnimatedEffect
+[19:20:37] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:37] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:37] DEBUG: Sheet size: 64x32
+[19:20:37] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:37] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:37] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:37] Moving widget to: (0, 300)
+[19:20:37] DEBUG: Processing event: update
+[19:20:37] DEBUG: Sync removing expired window: fireball_1
+[19:20:37] Closed window: fireball_1
+[19:20:37] DEBUG: Processing event: update
+[19:20:37] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:37] DEBUG: AnimatedEffect incoming scale_w: 256
+[19:20:37] DEBUG: AnimatedEffect applied DISPLAY_W: 256
+[19:20:37] DEBUG: Effect type name is: AnimatedEffect
+[19:20:37] DEBUG: window_base.py sees DISPLAY_W as 256
+[19:20:37] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:37] DEBUG: Sheet size: 64x32
+[19:20:37] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:37] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 256x256
+[19:20:37] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 256x256
+[19:20:37] CosinePathMovement Init - Raw start_pos: (200, 0), end_pos: (800, 600), kwargs: {}
+[19:20:37] CosinePathMovement State - x: 200, y: 0, end_x: 800.0
+[19:20:37] get_start_pos returning: (200, -41)
+[19:20:37] Moving widget to: (200, 0)
+[19:20:37] DEBUG: Processing event: update
+[19:20:37] DEBUG: Sync removing expired window: fireball_2
+[19:20:37] Closed window: fireball_2
+[19:20:38] DEBUG: Processing event: update
+[19:20:38] DEBUG: Selected class animated -> <class 'effects.AnimatedEffect'>
+[19:20:38] DEBUG: AnimatedEffect incoming scale_w: 128
+[19:20:38] DEBUG: AnimatedEffect applied DISPLAY_W: 128
+[19:20:38] DEBUG: Effect type name is: AnimatedEffect
+[19:20:38] DEBUG: window_base.py sees DISPLAY_W as 128
+[19:20:38] DEBUG: ImageLoader loading asset: C:\Users\Leonardo\Documents\renpyProjects\testProject\game\code\companion\..\..\images/sprites/red_fireball.png
+[19:20:38] DEBUG: Sheet size: 64x32
+[19:20:38] DEBUG: Processing 2 frames (W:32, H:32)
+[19:20:38] DEBUG: Frame 0 rect: PyQt6.QtCore.QRect(0, 0, 32, 32) -> Target: 128x128
+[19:20:38] DEBUG: Frame 1 rect: PyQt6.QtCore.QRect(32, 0, 32, 32) -> Target: 128x128
+[19:20:38] Moving widget to: (0, 300)
+[19:20:38] DEBUG: Processing event: update
+[19:20:38] DEBUG: Sync removing expired window: fireball_1
+[19:20:38] Closed window: fireball_1
+[19:20:38] DEBUG: Processing event: clear_all
+[19:20:38] DEBUG: Processing event: update
