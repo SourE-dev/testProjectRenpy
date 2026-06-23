@@ -1,6 +1,4 @@
 default companion_active_states = []
-default companion_registry = {} 
-
 
 init -1 python:
     import json, uuid, logging, socket, time
@@ -21,12 +19,15 @@ init -1 python:
     if not hasattr(renpy.store, "_companion_sync_manager"):
         renpy.store._companion_sync_manager = SyncManager()
     def dump_state(label):
-        """Helper to print a clean snapshot of the current state."""
+        """Helper to print a complete snapshot of the current state."""
         active_states = getattr(renpy.store, "companion_active_states", [])
         logger.info(f"[{label}] State Dump (Count: {len(active_states)})")
+        
         for i, s in enumerate(active_states):
-            logger.info(f"  [{i}] ID: {s.get('logical_id')} | Parent: {s.get('parent_id')} | Msg: {s.get('msg')}")
-
+            # We use json.dumps for clean, readable serialization of the entire dict
+            # indent=None keeps it on one line per entry for log readability
+            state_str = json.dumps(s, sort_keys=True)
+            logger.info(f"  [{i}] Full State: {state_str}")
     # --- Core Communication ---
     def send_event(clear=False):
         """Sends the state with a persistent sync_id to ensure order of operations."""
@@ -35,7 +36,6 @@ init -1 python:
         # Access the persistent ID that survives rollbacks
         mgr = renpy.store._companion_sync_manager
         mgr.id += 1 
-        
         if clear:
             logger.info(f"Attempting to send: clear_all (SyncID: {mgr.id})")
             new_payload = {"event_type": "clear_all", "sync_id": mgr.id}
@@ -50,7 +50,7 @@ init -1 python:
         
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.5) 
+            s.settimeout(0.3) 
             s.connect(('127.0.0.1', 12345))
             s.sendall(json.dumps(new_payload).encode('utf-8'))
             s.close()
@@ -74,19 +74,27 @@ init -1 python:
         global companion_active_states, sync_deferred
         
         final_eid = logical_id if logical_id else str(uuid.uuid4())
-        logger.info(f"show_effect called: ID={final_eid}, msg={msg}, parent={parent_id}")
         
+        # 1. FIND existing state to preserve options
+        existing_state = next((s for s in companion_active_states if s['logical_id'] == final_eid), None)
+        
+        # 2. MERGE existing options with new kwargs
+        base_options = existing_state.get("options", {}).copy() if existing_state else {}
+        base_options.update(kwargs)
+        
+        # 3. Create the new state with the merged options
         new_state = {
             "logical_id": final_eid, 
             "z_index": z_index, 
-            "msg": msg, 
+            "msg": msg if msg is not None else (existing_state.get("msg") if existing_state else None), 
             "effect": effect,
-            "geometry": geometry, 
-            "options": kwargs
+            "geometry": geometry if geometry is not None else (existing_state.get("geometry") if existing_state else None), 
+            "options": base_options
         }
         if parent_id: new_state["parent_id"] = parent_id
         if element_kind: new_state["element_kind"] = element_kind
         
+        # 4. Perform the update
         companion_active_states[:] = [s for s in companion_active_states if s['logical_id'] != final_eid]
         companion_active_states.append(new_state)
         
@@ -120,31 +128,4 @@ init -1 python:
 
     config.after_default_callbacks.append(sync_after_rollback)
 
-    # --- Registration & Engine Infrastructure ---
-    def _add_to_registry(name, data):
-        companion_registry[name] = data
-
-    def register_animated(name, image_path, frame_w=32, frame_h=32, cols=1, total_frames=1, movement_type="linear"):
-        _add_to_registry(name, {
-            "class": "animated", "image_path": image_path, "frame_w": frame_w, 
-            "frame_h": frame_h, "cols": cols, "total_frames": total_frames, "movement_type": movement_type
-        })
-
-    def register_static(name, image_path):
-        _add_to_registry(name, {"class": "basic", "image_path": image_path})
-    # 1. Add this function to handle the post-rollback sync
-    # --- Registration & Engine Infrastructure ---
-    def auto_register_effects():
-        if getattr(renpy.store, "_companion_registered", False):
-            return
-        for name, data in companion_registry.items():
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(0.2)
-                s.connect(('127.0.0.1', 12345))
-                s.sendall(json.dumps({"event_type": "register_effect", "name": name, "data": data}).encode('utf-8'))
-                s.close()
-            except: pass
-        renpy.store._companion_registered = True
-
-    config.start_callbacks.append(auto_register_effects)
+    

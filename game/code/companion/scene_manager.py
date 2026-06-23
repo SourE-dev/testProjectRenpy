@@ -7,29 +7,33 @@ class SceneManager:
         self.objects = {} # Stores logical_id : SceneObject
 
     def get_or_create(self, logical_id, z_index, options=None):
-        """
-        Creates a new SceneObject container if it doesn't exist.
-        """
         if logical_id not in self.objects:
-            log_debug(f"SceneManager: Creating new SceneObject [{logical_id}] with z_index={z_index}")
+            log_debug(f"SceneManager: Creating container [{logical_id}]")
             self.objects[logical_id] = SceneObject(logical_id, z_index, options)
+            self.objects[logical_id].widget.show()
         else:
-            log_debug(f"SceneManager: Fetching existing SceneObject [{logical_id}]")
-        
+            # Update property if it exists
+            self.objects[logical_id].z_index = z_index
         return self.objects[logical_id]
 
     def sort_and_stack_widgets(self):
-        """
-        Sorts the containers by z_index and updates their visual stacking.
-        """
-        log_debug("SceneManager: Starting sort_and_stack_widgets.")
-        
-        # Sort by z_index ascending (lowest z_index at bottom, highest at top)
+        # Sort objects by z_index ascending
         sorted_objs = sorted(self.objects.values(), key=lambda o: o.z_index)
         
         for obj in sorted_objs:
             if obj.widget:
                 log_debug(f"SceneManager: Raising widget for [{obj.logical_id}] (z_index: {obj.z_index})")
+                # Bringing to front brings it above previous (lower z) objects
                 obj.widget.raise_()
-        
-        log_debug("SceneManager: Finished stacking widgets.")
+
+    def clear_all(self):
+        log_debug("SceneManager: Clearing all objects.")
+        for obj_id in list(self.objects.keys()):
+            self.remove_object(obj_id)
+
+    def remove_object(self, logical_id):
+        obj = self.objects.pop(logical_id, None)
+        if obj:
+            obj.widget.close()
+            obj.widget.deleteLater()
+            log_debug(f"SceneManager: Closed container: {logical_id}")

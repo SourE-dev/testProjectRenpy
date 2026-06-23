@@ -1,31 +1,67 @@
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout
+from PyQt6.QtCore import QTimer, Qt, QRect
+from PyQt6.QtGui import QPixmap
 from utils import log_debug
-from PyQt6.QtCore import QTimer
-
-class AnimationComponent:
-    def __init__(self, frames, interval):
-        self.frames = frames
-        self.interval = interval
-        self.timer = QTimer()
+import os
+class BaseComponent(QWidget):
+    """Base class for all UI elements to ensure consistency."""
+    def __init__(self, options=None):
+        super().__init__()
+        self.options = options or {}
+        # Ensure widgets don't have their own window borders/decorations
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+class SpriteWidget(BaseComponent):
+    """A self-contained widget that handles its own animation and loading."""
+    def __init__(self, options=None, parent=None):
+        super().__init__(options) 
+        if parent:
+            self.setParent(parent) # Explicitly set the parent
+        log_debug(f"SpriteWidget: Initializing with options={self.options}")
+        
+        self.asset_path = self.options.get("asset_path")
+        if not self.asset_path:
+            log_debug("SpriteWidget: Error - missing asset_path in options")
+            return
+            
+        # REMOVED: self.layout = QVBoxLayout(self)
+        # Instead, we use a single Label as the core of the widget
+        self.label = QLabel(self)
+        self.label.setContentsMargins(0, 0, 0, 0)
+        
+        self.frames = []
         self.current_frame = 0
-        log_debug(f"AnimationComponent: Initialized with {len(frames)} frames, {interval}ms interval.")
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._next_frame)
+        
+        self._load_and_start(self.asset_path)
 
-    def start(self, widget, callback):
-        log_debug("AnimationComponent: Starting timer.")
-        self.timer.timeout.connect(lambda: callback(self.get_next_frame(widget)))
-        self.timer.start(self.interval)
+    def _load_and_start(self, path):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        full_path = os.path.normpath(os.path.join(base_dir, "..", "..", path))
+        
+        pixmap = QPixmap(full_path)
+        if not pixmap.isNull():
+            self.frames = [pixmap]
+            self.label.setPixmap(self.frames[0])
+            self.label.resize(pixmap.size()) # Resize the label to fit the image
+            self.resize(pixmap.size())       # Resize the widget to fit the image
+            self.timer.start(int(self.options.get("frame_interval", 200)))
+        else:
+            log_debug(f"SpriteWidget: Failed to load {full_path}")
 
-    def get_next_frame(self, widget):
-        # We avoid logging inside this method to prevent console spam
-        self.current_frame = (self.current_frame + 1) % len(self.frames)
-        return self.frames[self.current_frame]
+    def _next_frame(self):
+        if self.frames:
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.label.setPixmap(self.frames[self.current_frame])
 
-class MovementComponent:
-    def __init__(self, controller):
-        self.controller = controller
-        self.timer = QTimer()
-        log_debug("MovementComponent: Initialized.")
+class TextWidget(BaseComponent):
+    """A simple component for text elements inside containers."""
+    def __init__(self, text, options=None):
+        super().__init__(options)
+        self.layout = QVBoxLayout(self)
+        self.label = QLabel(text)
+        self.label.setStyleSheet("color: white;")
+        self.layout.addWidget(self.label)
 
-    def start(self, widget):
-        log_debug("MovementComponent: Starting movement timer at 20ms interval.")
-        self.timer.timeout.connect(lambda: self.controller.update(widget))
-        self.timer.start(20)
+    def update_text(self, text):
+        self.label.setText(text)

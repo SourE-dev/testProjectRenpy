@@ -1,55 +1,42 @@
 ﻿label start:
-    "Testing Containers and Shell/Content Architecture."
+    "Testing Component Architecture: Styling and Elements."
 
-    # 1. Spawn a Container (The Shell)
+    # 1. Spawn a Styled Container
+    # The 'bg_color' triggers the MessageWindow styling logic
     $ show_effect(
-        msg="Container Alpha", 
+        msg="Styled Container", 
         logical_id="test_win", 
         geometry={"x": 100, "y": 100, "w": 300, "h": 200},
-        bg_color="#333333"
+        bg_color="#0f599e",
+        border="2px solid #e61f1f"
     )
     
-    "Adding child to the container."
+    "Adding sprite to transparent container."
 
-    # 2. Add a child (Sprite/Element)
+    # 3. Add the Sprite to the transparent container
     $ show_effect(
         logical_id="child_1", 
         parent_id="test_win", 
         element_kind="sprite", 
-        asset_path="images/sprites/test_icon.png"
+        asset_path="images/sprites/test_icon.png",
+        geometry={"x": 50, "y": 50, "w": 100, "h": 100}
     )
     
-    "Window created at 100,100. Moving window via Ren'Py command..."
-    
-    # 3. Test Stateless Geometry (Commanding position)
+    "Window created and sprite loaded. Moving styled window..."
+    "This is cool"
+    # 4. Test Geometry Update
     $ show_effect(
         logical_id="test_win",
-        geometry={"x": 500, "y": 300, "w": 400, "h": 300},
-        msg="Container Alpha (Moved)"
+        geometry={"x": 200, "y": 200, "w": 400, "h": 300},
+        msg="Container Moved & Resized"
     )
     
-    "Window moved to 500,300. Now let's trigger a rollback."
+    "Testing child removal."
     
-    # 4. State Update
-    $ show_effect(
-        msg="Container Alpha (Updated Text)",
-        logical_id="test_win",
-        geometry={"x": 500, "y": 300, "w": 400, "h": 300}
-    )
     
-    "Cleanup test: The next line will clear the specific window."
-    
-    # Correct API Usage for removing a single element
+    # 5. Cleanup
+    $ hide_effect("child_1")
     $ hide_effect("test_win") 
     
-    "Cleanup test: The next line will clear everything."
-    
-    # Correct API Usage for clearing everything
-    $ clear_all_effects()
-    "Cool"
-    return
-   
-label after_rollback:
-    # This label is a safety hook if your project uses rollback handlers
-    $ clear_all_effects()
+    "Test complete."
     return
