@@ -19,14 +19,13 @@ class MessageWindow(QWidget):
         self.border_width = int(border_str.split('px')[0]) if 'px' in border_str else 2
         
         # 3. Layout setup
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(10, 10, 10, 10) # Added margin for border visibility
-        self.content_layout = self.layout
+        self.content_layout = QVBoxLayout(self)
+        self.content_layout.setContentsMargins(10, 10, 10, 10)
         
         if text:
             self.label = QLabel(text)
             self.label.setStyleSheet("color: white; padding: 10px;")
-            self.layout.addWidget(self.label)
+            self.content_layout.addWidget(self.label)
         
         log_debug(f"MessageWindow: Initialized with bg_color={self.bg_color}")
 

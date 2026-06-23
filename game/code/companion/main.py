@@ -83,14 +83,18 @@ class Companion(QWidget):
                 parent_id = s["parent_id"]
                 self.child_to_parent_map[eid] = parent_id
                 parent = self.scene_manager.objects.get(parent_id)
-                if parent and eid not in parent.child_widgets:
-                    parent.add_element(s)
-            else:
-                # Handle Container
-                # Pass z_index into get_or_create so it can be updated
-                obj = self.scene_manager.get_or_create(eid, s.get("z_index", 0), s.get("options"))
                 
-                # ADD THIS: Update Z-index manually if it changed
+                if parent:
+                    # UPDATED: Always call add_element. 
+                    # Your add_element method already handles "Clean up existing if re-added",
+                    # which effectively handles updates to z_index and geometry.
+                    parent.add_element(s)
+                else:
+                    log_debug(f"Companion: Warning - Parent {parent_id} not found for {eid}")
+            
+            else:
+                # Handle Container (The rest of your existing logic)
+                obj = self.scene_manager.get_or_create(eid, s.get("z_index", 0), s.get("options"))
                 obj.z_index = s.get("z_index", obj.z_index)
                 
                 if "geometry" in s: obj.update_geometry(s["geometry"])

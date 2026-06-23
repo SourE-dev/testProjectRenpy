@@ -19,10 +19,19 @@
         parent_id="test_win", 
         element_kind="sprite", 
         asset_path="images/sprites/test_icon.png",
-        geometry={"x": 50, "y": 50, "w": 100, "h": 100}
+        geometry={"x": 50, "y": 50, "w": 100, "h": 100},
+        z_index=3
     )
     
     "Window created and sprite loaded. Moving styled window..."
+    $ show_effect(
+        logical_id="child_2", 
+        parent_id="test_win", 
+        element_kind="sprite", 
+        asset_path="images/sprites/red_fireball.png",
+        geometry={"x": 60, "y": 60, "w": 100, "h": 100},
+        z_index=2
+    )
     "This is cool"
     # 4. Test Geometry Update
     $ show_effect(
@@ -31,12 +40,18 @@
         msg="Container Moved & Resized"
     )
     
-    "Testing child removal."
-    
+    "Testing child stuff"
+    $ show_effect(
+        logical_id="child_2", 
+        parent_id="test_win", 
+        element_kind="sprite", 
+        asset_path="images/sprites/red_fireball.png",
+        geometry={"x": 60, "y": 60, "w": 100, "h": 100},
+        z_index=4
+    )
+    "hopefully the fireball is below now"
     
     # 5. Cleanup
-    $ hide_effect("child_1")
-    $ hide_effect("test_win") 
-    
+    $ clear_all_effects()
     "Test complete."
     return
