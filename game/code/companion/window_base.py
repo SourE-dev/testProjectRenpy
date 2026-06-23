@@ -1,34 +1,22 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter
-from utils import log_debug # Ensure this is imported
-# Corrected Imports
-from registry import get_effect_class
-from base import BaseEffect
-from effects import AnimatedEffect # Import this for isinstance check
+from utils import log_debug
 
 class MessageWindow(QWidget):
-    def __init__(self, text, effect="default", options=None):
+    """
+    A 'Dumb' UI Container. 
+    It no longer handles effect initialization or timers.
+    It only displays what is passed to it.
+    """
+    def __init__(self, text, options=None):
         super().__init__()
         self.options = options or {}
-        self.is_active = True
-        # 1. Fetch config first to find out what "class" it is
-        # Note: You need a way to access get_effect_config here.
-        # You might need to pass the config object in, or use a global helper.
-        from registry import get_effect_class # Ensure this is your registry import
+        self.sprite_frame = None 
         
-        # 2. Determine the class based on the "class" key in options
-        # Since final_options is already merged, it contains 'class': 'animated'
-        class_type = self.options.get("class", "basic") 
-        effect_class = get_effect_class(class_type) 
-        
-        log_debug(f"DEBUG: Selected class {class_type} -> {effect_class}")
-        
-        self.effect = effect_class(options=self.options)
-   
+        # Window flags
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        # Window flags logic
         if self.options.get("click_through", False):
             flags = Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | \
                     Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowTransparentForInput
@@ -36,26 +24,17 @@ class MessageWindow(QWidget):
             flags = Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | \
                     Qt.WindowType.FramelessWindowHint
         self.setWindowFlags(flags)
-        
-        self.sprite_frame = None 
 
-        effect_type_name = self.effect.__class__.__name__
-        is_animated = (effect_type_name == "AnimatedEffect")
-
-        log_debug(f"DEBUG: Effect type name is: {effect_type_name}")
-        
-        if is_animated:
-            log_debug(f"DEBUG: window_base.py sees DISPLAY_W as {self.effect.DISPLAY_W}")
-            self.setFixedSize(self.effect.DISPLAY_W, self.effect.DISPLAY_H)
-            self.setLayout(QVBoxLayout())
+        # Handle initialization differently based on type
+        if "frame_w" in self.options:
+            self.setFixedSize(self.options["frame_w"], self.options["frame_h"])
+            # No setup_ui(text) here because it's a sprite
         else:
-            log_debug(f"DEBUG: Falling back to setup_ui for effect '{effect}'")
             self.setup_ui(text)
-        self.show()
-        self.effect.start_animation(self)
-
+   
 
     def update_frame(self, pixmap):
+        """Called by the external Effect/Animation component."""
         self.sprite_frame = pixmap
         self.update() 
 
@@ -67,17 +46,42 @@ class MessageWindow(QWidget):
             super().paintEvent(event)
 
     def setup_ui(self, text):
-        base_style = """
-            QLabel {
-                padding: 20px; border-radius: 15px; font-size: 20px; font-weight: bold;
-                background-color: rgba(30, 30, 30, 255); border: 2px solid #555555; color: white;
-            }
+        """Initializes the text-based UI with dynamic background/transparency."""
+        # 1. Parse Options
+        bg_hex = self.options.get("bg_color", "#1E1E1E")
+        opacity = self.options.get("opacity", 1.0) # 0.0 to 1.0
+        border_color = self.options.get("border_color", "#555555")
+        min_w = self.options.get("min_width", 0)
+        min_h = self.options.get("min_height", 0)
+        # 2. Convert Hex to RGBA
+        hex_color = bg_hex.lstrip('#')
+        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        alpha_int = int(opacity * 255)
+        bg_rgba = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, {alpha_int})"
+        
+        # 3. Apply Style
+        style = f"""
+            QLabel {{
+                padding: 20px; 
+                border-radius: 15px; 
+                font-size: 20px; 
+                font-weight: bold;
+                background-color: {bg_rgba}; 
+                border: 2px solid {border_color}; 
+                color: white;
+            }}
         """
+        
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        
         self.label = QLabel(text)
-        self.label.setStyleSheet(base_style + self.effect.apply_style(self))
+        
+        # APPLY CONSTRAINTS:
+        if min_w > 0: self.label.setMinimumWidth(min_w)
+        if min_h > 0: self.label.setMinimumHeight(min_h)
+        
+        self.label.setStyleSheet(style)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.label)
         self.setLayout(layout)
-        self.show()

@@ -7,93 +7,101 @@ init -1 python:
     # Configure logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("Companion")
-    logger.info("Initializing Companion Event System (Debounced/Manual)...")
+    logger.info("Initializing Companion Event System (Deferred/Batching)...")
 
     # Constants
     EFFECT_DEFAULT = "default"
-    MOVE_LINEAR = "linear"
-    MOVE_COSINE = "cosine"
-    DEBOUNCE_INTERVAL = 0.05  # 50ms throttle to prevent socket flooding
-    
-    last_sent_time = 0
+    sync_deferred = False 
 
-    def send_event(event_type=None, name=None, data=None, clear=False):
-        global last_sent_time
-        
-        # 1. Debounce Logic: Skip rapid-fire spam, but allow 'clear' commands
-        current_time = time.time()
-        if not clear and (current_time - last_sent_time) < DEBOUNCE_INTERVAL:
-            return
-        last_sent_time = current_time
-
-        active_states = getattr(renpy.store, "companion_active_states", [])
+    # --- Core Communication ---
+    def send_event(clear=False):
+        """Sends either the full state or a clear command to the Companion."""
+        global last_sent_time, sync_deferred
         
         if clear:
             new_payload = {"event_type": "clear_all"}
-        elif event_type == "register_effect":
-            new_payload = {"event_type": "register_effect", "name": name, "data": data}
         else:
+            active_states = getattr(renpy.store, "companion_active_states", [])
             new_payload = {"event_type": "update", "data": list(active_states)}
-            
-        # Optional: Prevent redundant network traffic
-        if hasattr(send_event, "last_payload") and send_event.last_payload == new_payload and not clear:
-            return
-        send_event.last_payload = new_payload
         
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.1) # Tightened timeout to prevent game stutter
+            s.settimeout(0.2)
             s.connect(('127.0.0.1', 12345))
             s.sendall(json.dumps(new_payload).encode('utf-8'))
             s.close()
-            logger.info(f"Event sent via TCP: {new_payload['event_type']}")
+            logger.info(f"Sync sent to Companion: {new_payload.get('event_type')}")
         except Exception as e:
-            logger.warning(f"Companion not connected: {e}")
+            logger.warning(f"Companion connection failed: {e}")
+        
+        sync_deferred = False
 
-    # Writer-Facing API
-    def show_effect(msg, effect=EFFECT_DEFAULT, logical_id=None, **kwargs):
-        """Displays an effect on screen. Must be hidden manually."""
+    def run_deferred_sync():
+        global sync_deferred
+        if sync_deferred:
+            send_event()
+
+    # Hook into Ren'Py's end-of-frame to bundle all changes into one packet
+    config.overlay_functions.append(run_deferred_sync)
+
+    # --- Writer-Facing API ---
+    def show_effect(msg, effect=EFFECT_DEFAULT, logical_id=None, z_index=0, **kwargs):
+        global companion_active_states, sync_deferred
+        
         final_eid = logical_id if logical_id else str(uuid.uuid4())
+        new_state = {"logical_id": final_eid, "z_index": z_index, "msg": msg, "effect": effect, "options": kwargs}
         
-        new_state = {
-            "logical_id": final_eid, 
-            "msg": msg, 
-            "effect": effect, 
-            "options": kwargs
-        }
-        
-        # Replace existing if logical_id is reused
-        existing = next((s for s in companion_active_states if s['logical_id'] == final_eid), None)
-        if existing: companion_active_states.remove(existing)
-            
+        # Replace existing state
+        companion_active_states = [s for s in companion_active_states if s['logical_id'] != final_eid]
         companion_active_states.append(new_state)
-        logger.info(f"Effect shown: {final_eid}")
-        send_event() 
+        renpy.store.companion_active_states = companion_active_states
+        
+        sync_deferred = True 
         return final_eid
 
     def hide_effect(logical_id):
-        """Removes an effect by its logical_id."""
-        global companion_active_states
-        
-        initial_len = len(companion_active_states)
+        global companion_active_states, sync_deferred
         companion_active_states[:] = [s for s in companion_active_states if s['logical_id'] != logical_id]
-        
-        if len(companion_active_states) < initial_len:
-            logger.info(f"Effect hidden: {logical_id}")
-            send_event()
-        else:
-            logger.warning(f"Attempted to hide non-existent effect: {logical_id}")
+        sync_deferred = True
 
     def clear_all_effects():
-        """Force wipes all effects from the companion screen."""
-        global companion_active_states
+        global companion_active_states, sync_deferred
         companion_active_states[:] = []
-        logger.info("All effects cleared manually.")
+        sync_deferred = True
+        # Immediate clear packet
         send_event(clear=True)
 
-    # Rollback/Load Sync: Ensure companion matches the game timeline
-    def sync_companion_after_rollback():
-        send_event()
+    # --- Registration & Engine Infrastructure ---
+    def _add_to_registry(name, data):
+        companion_registry[name] = data
 
-    config.after_default_callbacks.append(lambda: send_event())
-    # config.after_rollback_callbacks.append(sync_companion_after_rollback)
+    def register_animated(name, image_path, frame_w=32, frame_h=32, cols=1, total_frames=1, movement_type="linear"):
+        _add_to_registry(name, {
+            "class": "animated", "image_path": image_path, "frame_w": frame_w, 
+            "frame_h": frame_h, "cols": cols, "total_frames": total_frames, "movement_type": movement_type
+        })
+
+    def register_static(name, image_path):
+        _add_to_registry(name, {"class": "basic", "image_path": image_path})
+    # 1. Add this function to handle the post-rollback sync
+    def sync_after_rollback():
+        global sync_deferred
+        sync_deferred = True
+
+    # Register it to the valid configuration variable
+    config.after_default_callbacks.append(sync_after_rollback)
+    # --- Registration & Engine Infrastructure ---
+    def auto_register_effects():
+        if getattr(renpy.store, "_companion_registered", False):
+            return
+        for name, data in companion_registry.items():
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(0.2)
+                s.connect(('127.0.0.1', 12345))
+                s.sendall(json.dumps({"event_type": "register_effect", "name": name, "data": data}).encode('utf-8'))
+                s.close()
+            except: pass
+        renpy.store._companion_registered = True
+
+    config.start_callbacks.append(auto_register_effects)

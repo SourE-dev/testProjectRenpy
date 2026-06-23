@@ -1,47 +1,29 @@
 ﻿label start:
-    "We are so ready!"
+    "Starting Layering Test with transparency and size constraints..."
 
-    # Test the linear projectile
-    $ show_effect(
-        "Launching Projectile!",
-        effect="fast_fireball",
-        logical_id="fireball_1",
-        movement_params={"start_pos": (0, 300), "end_pos": (1200, 300), "speed": 40},
-        scale_w=128, scale_h=128
-    )
+    # 1. Spawn a 'background' message at Z=0
+    # Added min_width to prevent shrinking on rollback
+    $ show_effect("I am at the BOTTOM (Z=0)", logical_id="layer_bottom", z_index=0, bg_color="#0000FF", opacity=0.4, min_width=300)
     
-    "The fireball is active now."
+    # 2. Spawn a 'foreground' message at Z=10
+    $ show_effect("I am at the TOP (Z=10)", logical_id="layer_top", z_index=10, bg_color="#FF0000", opacity=0.6, min_width=300)
     
-    # Manually hide it before proceeding
-    $ hide_effect("fireball_1")
-    "Fireball 1 hidden."
-    
-    # Test the curved magic effect
-    $ show_effect(
-        "Magic Curving!",
-        effect="curved_fireball",
-        logical_id="fireball_2",
-        movement_params={"start_pos": (200, 0), "end_pos": (800, 600), "speed": 15},
-        scale_w=256, scale_h=256
-    )
-    
-    "Registration and effects verified."
-    $ hide_effect("fireball_2")
-    "Fireball 2 hidden."
+    "Both windows should be visible now. The transparency and size are now locked."
 
-    # Test the third fireball
-    $ show_effect(
-        "Launching Projectile!",
-        effect="fast_fireball",
-        logical_id="fireball_3",
-        movement_params={"start_pos": (0, 300), "end_pos": (1200, 300), "speed": 40},
-        scale_w=128, scale_h=128
-    )
+    # 3. Dynamic Re-layering Test
+    "Now let's swap them. Moving TOP to Z=-1 and BOTTOM to Z=5."
     
-    "Cool. Now clearing all manually."
+    # The min_width ensures these windows don't shrink when text is replaced
+    $ show_effect("I am now buried (Z=-1)", logical_id="layer_top", z_index=-1, bg_color="#FF0000", opacity=0.6, min_width=300)
+    $ show_effect("I am now visible (Z=5)", logical_id="layer_bottom", z_index=5, bg_color="#0000FF", opacity=0.4, min_width=300)
+
+    "The layering updated, and the window sizes remain consistent."
+
     $ clear_all_effects()
-    "Great"
+    "Cleanup complete."
     return
+
 label after_rollback:
+    # Explicitly clear state on rollback to trigger fresh sync
     $ clear_all_effects()
     return

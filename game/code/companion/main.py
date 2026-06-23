@@ -11,15 +11,15 @@ from PyQt6 import sip
 # Local imports
 import config
 from utils import log_debug
-# Assuming you move MessageWindow to window_base.py as planned
+from scene_manager import SceneManager
 from window_base import MessageWindow 
-
+from registry import get_effect_class
 class Companion(QWidget):
     """The core engine that listens for socket commands to sync UI."""
     def __init__(self):
         super().__init__()
         self.active_messages = {}
-        
+        self.scene_manager = SceneManager()
         # 1. Setup TCP Socket Server
         self.server = QTcpServer()
         # Listen on localhost (127.0.0.1) on port 12345
@@ -67,7 +67,7 @@ class Companion(QWidget):
                 self.clear_all_messages()
             elif cmd_type == "update": 
                 data = cmd_package.get("data", [])
-                
+                log_debug(f"DEBUG: Received packet with {len(data)} items: {data}")
                 # 2. Structural Debugging
                 if not isinstance(data, list):
                     log_debug(f"ERROR: 'data' field is not a list! Found: {type(data)}")
@@ -101,59 +101,85 @@ class Companion(QWidget):
         if not found: 
             log_debug("Warning: Game window not detected.")
 
+    # main.py
+
     def sync_windows(self, target_states):
-        # 1. Identify what the game wants to be active
-        target_ids = {s['logical_id'] for s in target_states if isinstance(s, dict)}
-        
-        # 2. Cleanup: Delete anything not in the new target list
-        # This handles both explicit hide_effect() calls AND rollback state reverts
-        for eid in list(self.active_messages.keys()):
+        # 1. Cleanup
+        target_ids = {s['logical_id'] for s in target_states}
+        log_debug(f"DEBUG: Syncing {len(target_states)} states.") # Check count
+        for eid in list(self.scene_manager.objects.keys()):
             if eid not in target_ids:
-                log_debug(f"DEBUG: Sync removing expired window: {eid}")
+                log_debug(f"DEBUG: Cleaning up {eid}")
                 self.clear_single_message(eid)
         
-        # 3. Spawn: Create only what is missing
+        # 2. Spawn/Update
         for s in target_states:
             eid = s['logical_id']
-            if eid in self.active_messages:
-                continue
-                
+            z_idx = s.get("z_index", 0)
+            
+            # Prepare options
             effect_name = s.get("effect", "default")
             user_overrides = s.get("options", {})
-            
             library_defaults = self.get_effect_config(effect_name)
-            final_options = {**library_defaults, **user_overrides}
+            final_options = {**library_defaults, **user_overrides} 
             
-            if "image_path" not in final_options:
-                continue
-
-            self.active_messages[eid] = MessageWindow(
-                s['msg'], 
-                effect=effect_name, 
-                options=final_options
-            )
-
+            if eid not in self.scene_manager.objects:
+                # Create Body
+                log_debug(f"DEBUG: Creating new widget for {eid}")
+                widget = MessageWindow(s['msg'], options=final_options)
+                
+                # Create Brain
+                effect_class = get_effect_class(final_options.get("class", "basic"))
+                effect = effect_class(options=final_options)
+                effect.start_animation(widget)
+                
+                # Register in SceneManager
+                self.scene_manager.get_or_create(eid, z_idx, widget, effect)
+                widget.show()
+            else:
+                # Update Z-Index for existing object
+                log_debug(f"DEBUG: Updating existing {eid} (Z: {z_idx})")
+                obj = self.scene_manager.objects[eid]
+                # Update Z-Index
+                obj.z_index = z_idx
+                
+                # Update Text/Content
+                # Access the label directly if it exists in your MessageWindow
+                if hasattr(obj.widget, 'label'):
+                    if obj.widget.label.text() != s['msg']:
+                        obj.widget.label.setText(s['msg'])
+                
+                log_debug(f"DEBUG: Updated existing {eid} (Z: {z_idx})")
+                
+        # 3. Final visual layer sorting (This triggers the raise_ logic)
+        self.scene_manager.sort_and_stack_widgets()
+        for eid, obj in self.scene_manager.objects.items():
+            log_debug(f"DEBUG: Object {eid} is at Z={obj.z_index}")
+    # In main.py
     def clear_all_messages(self):
-        for eid in list(self.active_messages.keys()):
+        # Change from self.active_messages to the manager's collection
+        for eid in list(self.scene_manager.objects.keys()):
             self.clear_single_message(eid)
 
     # In Companion class (main.py)
+    # main.py
+
     def clear_single_message(self, eid):
-        # 1. Remove from dictionary first so it's no longer "Active"
-        widget = self.active_messages.pop(eid, None)
+        # Pop from the manager instead of active_messages
+        obj = self.scene_manager.objects.pop(eid, None)
         
-        # 2. Use a safe check to ensure the object exists in Python before interacting
-        if widget is not None and not sip.isdeleted(widget):
-            # Stop the internal timers first
-            if hasattr(widget, 'effect'):
-                widget.effect.cleanup(widget)
+        if obj:
+            # Stop the Brain
+            if hasattr(obj.effect, 'cleanup'):
+                obj.effect.cleanup(obj.widget)
             
-            # Use deleteLater() which is thread-safe and deferred
-            widget.hide()
-            widget.deleteLater()
-            log_debug(f"Closed window: {eid}")
+            # Destroy the Body
+            if obj.widget and not sip.isdeleted(obj.widget):
+                obj.widget.hide()
+                obj.widget.deleteLater()
+                log_debug(f"Closed window: {eid}")
         else:
-            log_debug(f"Skipping cleanup for {eid}: Already deleted or None")
+            log_debug(f"Skipping cleanup for {eid}: Not found in SceneManager")
     def save_custom_effect(self, name, data):
         # 1. Load existing custom effects
         try:
