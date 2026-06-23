@@ -18,24 +18,25 @@ class Companion(QWidget):
     """The core engine that listens for socket commands to sync UI."""
     def __init__(self):
         super().__init__()
+        log_debug("Companion: Initializing engine...")
         self.active_messages = {}
         self.scene_manager = SceneManager()
-        self.child_to_parent_map = {} # {child_id: parent_id}
-        # 1. Setup TCP Socket Server
+        self.child_to_parent_map = {}
+        self.last_sync_id = -1
         self.server = QTcpServer()
-        # Listen on localhost (127.0.0.1) on port 12345
         if not self.server.listen(QHostAddress.SpecialAddress.LocalHost, 12345):
-            log_debug(f"Critical: Unable to start server: {self.server.errorString()}")
+            log_debug(f"Companion: CRITICAL: Unable to start server: {self.server.errorString()}")
         
         self.server.newConnection.connect(self.handle_connection)
-        log_debug("Companion Server listening on 127.0.0.1:12345")
+        log_debug("Companion: Server listening on 127.0.0.1:12345")
         
-        # 2. Health Monitor (Keep this as is)
         self.watchdog = QTimer(self)
         self.watchdog.timeout.connect(self.check_game_health)
         self.watchdog.start(3000)
+        log_debug("Companion: Initialization complete.")
     def get_effect_config(self, effect_name):
         # 1. Load Custom Effects
+        log_debug(f"Companion: Fetching config for effect: {effect_name}")
         try:
             with open("user_custom_effects.json", "r") as f:
                 custom = json.load(f)
@@ -49,20 +50,25 @@ class Companion(QWidget):
                 return core.get(effect_name, {})
         except: return {}
     def handle_connection(self):
+        log_debug("Companion: New socket connection incoming.")
         socket = self.server.nextPendingConnection()
         socket.readyRead.connect(lambda: self.process_packet(socket))
     
     def process_packet(self, socket):
         raw_data = socket.readAll().data()
         try:
-            # 1. Log raw data for verification
-            decoded_data = raw_data.decode('utf-8')
-            # log_debug(f"DEBUG: Raw Packet: {decoded_data}") # Uncomment if needed
+            cmd_package = json.loads(raw_data.decode('utf-8'))
             
-            cmd_package = json.loads(decoded_data)
+            # SEQUENCE ID CHECK
+            packet_sync_id = cmd_package.get("sync_id", 0)
+            if packet_sync_id < self.last_sync_id:
+                log_debug(f"Companion: Discarding outdated packet (ID: {packet_sync_id} < {self.last_sync_id})")
+                return
+            
+            self.last_sync_id = packet_sync_id
             cmd_type = cmd_package.get("event_type")
             
-            log_debug(f"DEBUG: Processing event: {cmd_type}")
+            log_debug(f"Companion: Packet received | Type: {cmd_type}")
             
             if cmd_type == "clear_all": 
                 self.clear_all_messages()
@@ -87,8 +93,8 @@ class Companion(QWidget):
         except Exception as e:
             # 3. Enhanced Exception Debugging
             import traceback
-            log_debug(f"Packet error: {e}")
-            log_debug(f"Traceback: {traceback.format_exc()}")
+            log_debug(f"Companion: ERROR processing packet: {e}")
+            log_debug(f"Companion: Traceback: {traceback.format_exc()}")
         finally:
             socket.disconnectFromHost()
             socket.deleteLater()
@@ -109,19 +115,20 @@ class Companion(QWidget):
         Synchronizes the UI state with Ren'Py's current engine state.
         Enforces geometry from packets for rollback stability.
         """
+        log_debug("Companion: Sync started.")
         # 1. Cleanup: Remove objects not present in the current target_states
         target_ids = {s['logical_id'] for s in target_states}
         
         # Cleanup Containers
         for eid in list(self.scene_manager.objects.keys()):
             if eid not in target_ids:
-                log_debug(f"DEBUG: Cleaning up orphaned container {eid}")
+                log_debug(f"Companion: Cleaning up orphaned container: {eid}")
                 self.clear_single_message(eid)
         
         # Cleanup Children
         for child_id in list(self.child_to_parent_map.keys()):
             if child_id not in target_ids:
-                log_debug(f"DEBUG: Detected orphaned child {child_id}, cleaning up.")
+                log_debug(f"Companion: Cleaning up orphaned child: {child_id}")
                 self.clear_single_message(child_id)
 
         # 2. Process Containers
@@ -180,13 +187,18 @@ class Companion(QWidget):
                     if eid not in parent.child_widgets:
                         log_debug(f"DEBUG: Adding child {eid} to parent {parent_id}")
                         parent.add_element(s)
-                    # Note: We skip existing children to avoid duplicate widget adding
-        
+                else:
+                    # CRITICAL FIX: If parent is missing, treat the child as an error
+                    # or a pending request. For now, log and clean up to prevent ghosts.
+                    log_debug(f"WARNING: Child {eid} received, but parent {parent_id} not found. Skipping.")
+                    self.clear_single_message(eid)
         # 4. Final visual layer sorting
         self.scene_manager.sort_and_stack_widgets()
+        log_debug("Companion: Sync finished.")
     # In main.py
     def clear_all_messages(self):
         # Change from self.active_messages to the manager's collection
+        log_debug("Companion: Clearing all messages.")
         for eid in list(self.scene_manager.objects.keys()):
             self.clear_single_message(eid)
 
@@ -195,6 +207,7 @@ class Companion(QWidget):
 
     def clear_single_message(self, eid):
         # 1. Handle Child Cleanup
+        log_debug(f"Companion: Clearing message: {eid}")
         if eid in self.child_to_parent_map:
             parent_id = self.child_to_parent_map[eid]
             parent_obj = self.scene_manager.objects.get(parent_id)
@@ -222,8 +235,10 @@ class Companion(QWidget):
                 log_debug(f"Closed container: {eid}")
         else:
             log_debug(f"Skipping cleanup for {eid}: Not found in SceneManager")
+        log_debug(f"Companion: Successfully cleared: {eid}")
     def save_custom_effect(self, name, data):
         # 1. Load existing custom effects
+        log_debug(f"Companion: Saving custom effect: {name}")
         try:
             with open("user_custom_effects.json", "r") as f:
                 library = json.load(f)
@@ -237,7 +252,7 @@ class Companion(QWidget):
         with open("user_custom_effects.json", "w") as f:
             json.dump(library, f, indent=4)
         
-        log_debug(f"Saved custom effect: {name}")
+        log_debug(f"Companion: Saved custom effect: {name}")
 
 if __name__ == "__main__":
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL)
