@@ -1,37 +1,47 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPainter
 from utils import log_debug
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QSizePolicy
+from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtGui import QPainter
 
 class MessageWindow(QWidget):
-    """
-    A 'Dumb' UI Container. 
-    It no longer handles effect initialization or timers.
-    It only displays what is passed to it.
-    """
     def __init__(self, text, options=None):
         super().__init__()
         self.options = options or {}
-        self.sprite_frame = None 
+        self.sprite_frame = None
         
-        # Window flags
+        # 1. Shell: Rigid Geometry Control
+        # Tool window + Frameless prevents taskbar icons and OS chrome
+        self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         
-        if self.options.get("click_through", False):
-            flags = Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | \
-                    Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowTransparentForInput
-        else:
-            flags = Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | \
-                    Qt.WindowType.FramelessWindowHint
-        self.setWindowFlags(flags)
+        # 2. Content: Layout Control
+        # This inner widget handles the stacking of labels/sprites/children
+        self.content_widget = QWidget(self)
+        self.layout = QVBoxLayout(self.content_widget)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
+        # 3. Setup Initial UI
+        self.label = None
+        self.setup_ui(text)
 
-        # Handle initialization differently based on type
-        if "frame_w" in self.options:
-            self.setFixedSize(self.options["frame_w"], self.options["frame_h"])
-            # No setup_ui(text) here because it's a sprite
-        else:
-            self.setup_ui(text)
-   
+    def resizeEvent(self, event):
+        # Ensure the content area always matches the shell dimensions
+        self.content_widget.resize(self.size())
+        super().resizeEvent(event)
+
+    def setup_ui(self, text):
+        bg_hex = self.options.get("bg_color", "#1E1E1E")
+        # Ensure style is applied correctly to the label
+        style = f"background-color: {bg_hex}; border-radius: 15px; border: 2px solid #555555; color: white; padding: 10px;"
+        
+        self.label = QLabel(text)
+        self.label.setStyleSheet(style)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # CRITICAL: Add to the content_widget's layout, not the shell itself
+        self.layout.addWidget(self.label)
 
     def update_frame(self, pixmap):
         """Called by the external Effect/Animation component."""
@@ -39,49 +49,9 @@ class MessageWindow(QWidget):
         self.update() 
 
     def paintEvent(self, event):
+        # The Shell draws the animation (if any) or remains transparent/filled
         if self.sprite_frame and not self.sprite_frame.isNull():
             painter = QPainter(self)
             painter.drawPixmap(0, 0, self.sprite_frame)
         else:
             super().paintEvent(event)
-
-    def setup_ui(self, text):
-        """Initializes the text-based UI with dynamic background/transparency."""
-        # 1. Parse Options
-        bg_hex = self.options.get("bg_color", "#1E1E1E")
-        opacity = self.options.get("opacity", 1.0) # 0.0 to 1.0
-        border_color = self.options.get("border_color", "#555555")
-        min_w = self.options.get("min_width", 0)
-        min_h = self.options.get("min_height", 0)
-        # 2. Convert Hex to RGBA
-        hex_color = bg_hex.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-        alpha_int = int(opacity * 255)
-        bg_rgba = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, {alpha_int})"
-        
-        # 3. Apply Style
-        style = f"""
-            QLabel {{
-                padding: 20px; 
-                border-radius: 15px; 
-                font-size: 20px; 
-                font-weight: bold;
-                background-color: {bg_rgba}; 
-                border: 2px solid {border_color}; 
-                color: white;
-            }}
-        """
-        
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        
-        self.label = QLabel(text)
-        
-        # APPLY CONSTRAINTS:
-        if min_w > 0: self.label.setMinimumWidth(min_w)
-        if min_h > 0: self.label.setMinimumHeight(min_h)
-        
-        self.label.setStyleSheet(style)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.label)
-        self.setLayout(layout)

@@ -1,0 +1,24 @@
+{
+    "fast_fireball": {
+        "class": "animated",
+        "image_path": "images/sprites/red_fireball.png",
+        "frame_w": 32,
+        "frame_h": 32,
+        "cols": 2,
+        "total_frames": 2,
+        "movement_type": "linear"
+    },
+    "big_fireball_icon": {
+        "class": "basic",
+        "image_path": "images/sprites/red_fireball.png"
+    },
+    "curved_fireball": {
+        "class": "animated",
+        "image_path": "images/sprites/red_fireball.png",
+        "frame_w": 32,
+        "frame_h": 32,
+        "cols": 2,
+        "total_frames": 2,
+        "movement_type": "cosine"
+    }
+}

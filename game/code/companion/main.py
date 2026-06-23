@@ -20,6 +20,7 @@ class Companion(QWidget):
         super().__init__()
         self.active_messages = {}
         self.scene_manager = SceneManager()
+        self.child_to_parent_map = {} # {child_id: parent_id}
         # 1. Setup TCP Socket Server
         self.server = QTcpServer()
         # Listen on localhost (127.0.0.1) on port 12345
@@ -104,57 +105,85 @@ class Companion(QWidget):
     # main.py
 
     def sync_windows(self, target_states):
-        # 1. Cleanup
+        """
+        Synchronizes the UI state with Ren'Py's current engine state.
+        Enforces geometry from packets for rollback stability.
+        """
+        # 1. Cleanup: Remove objects not present in the current target_states
         target_ids = {s['logical_id'] for s in target_states}
-        log_debug(f"DEBUG: Syncing {len(target_states)} states.") # Check count
+        
+        # Cleanup Containers
         for eid in list(self.scene_manager.objects.keys()):
             if eid not in target_ids:
-                log_debug(f"DEBUG: Cleaning up {eid}")
+                log_debug(f"DEBUG: Cleaning up orphaned container {eid}")
                 self.clear_single_message(eid)
         
-        # 2. Spawn/Update
+        # Cleanup Children
+        for child_id in list(self.child_to_parent_map.keys()):
+            if child_id not in target_ids:
+                log_debug(f"DEBUG: Detected orphaned child {child_id}, cleaning up.")
+                self.clear_single_message(child_id)
+
+        # 2. Process Containers
         for s in target_states:
+            if "parent_id" in s:
+                continue 
+                
             eid = s['logical_id']
             z_idx = s.get("z_index", 0)
             
-            # Prepare options
+            # Prepare configuration
             effect_name = s.get("effect", "default")
             user_overrides = s.get("options", {})
             library_defaults = self.get_effect_config(effect_name)
             final_options = {**library_defaults, **user_overrides} 
             
             if eid not in self.scene_manager.objects:
-                # Create Body
-                log_debug(f"DEBUG: Creating new widget for {eid}")
-                widget = MessageWindow(s['msg'], options=final_options)
+                log_debug(f"DEBUG: Creating new Container: {eid}")
+                obj = self.scene_manager.get_or_create(eid, z_idx, final_options)
                 
-                # Create Brain
+                # Apply initial geometry if present
+                if "geometry" in s:
+                    obj.update_geometry(s["geometry"])
+                
+                if 'msg' in s and s['msg'] is not None:
+                    obj.update_text(s['msg'])
+                
+                # Attach Brain
                 effect_class = get_effect_class(final_options.get("class", "basic"))
-                effect = effect_class(options=final_options)
-                effect.start_animation(widget)
+                obj.effect = effect_class(options=final_options)
+                obj.effect.start_animation(obj.widget)
                 
-                # Register in SceneManager
-                self.scene_manager.get_or_create(eid, z_idx, widget, effect)
-                widget.show()
+                obj.widget.show()
+            
             else:
-                # Update Z-Index for existing object
-                log_debug(f"DEBUG: Updating existing {eid} (Z: {z_idx})")
+                # Update existing Container
                 obj = self.scene_manager.objects[eid]
-                # Update Z-Index
                 obj.z_index = z_idx
                 
-                # Update Text/Content
-                # Access the label directly if it exists in your MessageWindow
-                if hasattr(obj.widget, 'label'):
-                    if obj.widget.label.text() != s['msg']:
-                        obj.widget.label.setText(s['msg'])
+                # ENFORCE STATELESS GEOMETRY
+                if "geometry" in s:
+                    obj.update_geometry(s["geometry"])
                 
-                log_debug(f"DEBUG: Updated existing {eid} (Z: {z_idx})")
+                if 'msg' in s and s['msg'] is not None:
+                    obj.update_text(s['msg'])
+
+        # 3. Process Children
+        for s in target_states:
+            if "parent_id" in s:
+                eid = s['logical_id']
+                parent_id = s["parent_id"]
+                self.child_to_parent_map[eid] = parent_id
                 
-        # 3. Final visual layer sorting (This triggers the raise_ logic)
+                parent = self.scene_manager.objects.get(parent_id)
+                if parent:
+                    if eid not in parent.child_widgets:
+                        log_debug(f"DEBUG: Adding child {eid} to parent {parent_id}")
+                        parent.add_element(s)
+                    # Note: We skip existing children to avoid duplicate widget adding
+        
+        # 4. Final visual layer sorting
         self.scene_manager.sort_and_stack_widgets()
-        for eid, obj in self.scene_manager.objects.items():
-            log_debug(f"DEBUG: Object {eid} is at Z={obj.z_index}")
     # In main.py
     def clear_all_messages(self):
         # Change from self.active_messages to the manager's collection
@@ -165,7 +194,20 @@ class Companion(QWidget):
     # main.py
 
     def clear_single_message(self, eid):
-        # Pop from the manager instead of active_messages
+        # 1. Handle Child Cleanup
+        if eid in self.child_to_parent_map:
+            parent_id = self.child_to_parent_map[eid]
+            parent_obj = self.scene_manager.objects.get(parent_id)
+            
+            if parent_obj:
+                log_debug(f"DEBUG: Attempting to remove child {eid} from parent {parent_id}")
+                parent_obj.remove_child(eid)
+                self.child_to_parent_map.pop(eid) # Remove from map
+            else:
+                log_debug(f"DEBUG: Parent {parent_id} gone, force-cleaning child {eid}")
+                self.child_to_parent_map.pop(eid)
+            return
+        # 2. Handle Parent/Container Cleanup
         obj = self.scene_manager.objects.pop(eid, None)
         
         if obj:
@@ -173,11 +215,11 @@ class Companion(QWidget):
             if hasattr(obj.effect, 'cleanup'):
                 obj.effect.cleanup(obj.widget)
             
-            # Destroy the Body
+            # Destroy the Body (using sip to prevent dangling pointers)
             if obj.widget and not sip.isdeleted(obj.widget):
                 obj.widget.hide()
                 obj.widget.deleteLater()
-                log_debug(f"Closed window: {eid}")
+                log_debug(f"Closed container: {eid}")
         else:
             log_debug(f"Skipping cleanup for {eid}: Not found in SceneManager")
     def save_custom_effect(self, name, data):
