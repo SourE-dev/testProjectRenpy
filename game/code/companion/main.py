@@ -43,17 +43,17 @@ class Companion(QWidget):
         try:
             cmd_package = json.loads(raw_data.decode('utf-8'))
             packet_sync_id = cmd_package.get("sync_id", 0)
-            if packet_sync_id < self.last_sync_id:
-                log_debug(f"Companion: Packet sync error | {packet_sync_id} < {self.last_sync_id}")
-                return
-            
+         
             self.last_sync_id = packet_sync_id
             cmd_type = cmd_package.get("event_type")
             
             if cmd_type == "clear_all": 
+                log_debug("DEBUG: SceneManager received CLEAR command.")
                 self.clear_all_messages()
             elif cmd_type == "update": 
+                self.scene_manager.process_packet(cmd_package)
                 self.sync_windows(cmd_package.get("data", []))
+
                 
         except Exception as e:
             log_debug(f"Companion: ERROR processing packet: {e}\n{traceback.format_exc()}")

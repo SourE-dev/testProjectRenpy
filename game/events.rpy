@@ -11,13 +11,13 @@ init -1 python:
     # Constants
     EFFECT_DEFAULT = "default"
     sync_deferred = False 
-    class SyncManager:
-        def __init__(self):
-            self.id = 0
-            
-    # Persistent container for the ID
-    if not hasattr(renpy.store, "_companion_sync_manager"):
-        renpy.store._companion_sync_manager = SyncManager()
+    if not hasattr(renpy.store, "_companion_sync_id"):
+        renpy.store._companion_sync_id = 0
+
+    def get_next_sync_id():
+        renpy.store._companion_sync_id += 1
+        return renpy.store._companion_sync_id
+    
     def dump_state(label):
         """Helper to print a complete snapshot of the current state."""
         active_states = getattr(renpy.store, "companion_active_states", [])
@@ -34,18 +34,18 @@ init -1 python:
         global sync_deferred
         
         # Access the persistent ID that survives rollbacks
-        mgr = renpy.store._companion_sync_manager
-        mgr.id += 1 
+        sync_id = get_next_sync_id()
+        
         if clear:
-            logger.info(f"Attempting to send: clear_all (SyncID: {mgr.id})")
-            new_payload = {"event_type": "clear_all", "sync_id": mgr.id}
+            logger.info(f"Attempting to send: clear_all (SyncID: {sync_id})")
+            new_payload = {"event_type": "clear_all", "sync_id": sync_id}
         else:
             active_states = getattr(renpy.store, "companion_active_states", [])
-            logger.info(f"Attempting to send: update (Items: {len(active_states)}, SyncID: {mgr.id})")
+            logger.info(f"Attempting to send: update (Items: {len(active_states)}, SyncID: {sync_id})")
             new_payload = {
                 "event_type": "update", 
                 "data": list(active_states), 
-                "sync_id": mgr.id
+                "sync_id": sync_id
             }
         
         try:
@@ -69,39 +69,54 @@ init -1 python:
     config.overlay_functions.append(run_deferred_sync)
 
     # --- Effect Management ---
+    # --- Effect Management ---
     def show_effect(msg=None, effect=EFFECT_DEFAULT, logical_id=None, z_index=0, 
-                    parent_id=None, element_kind=None, geometry=None, **kwargs):
+                    parent_id=None, element_kind=None, geometry=None, animation=None, **kwargs):
         global companion_active_states, sync_deferred
         
+        # 1. Ensure logical_id is provided or generated
         final_eid = logical_id if logical_id else str(uuid.uuid4())
         
-        # 1. FIND existing state to preserve options
+        # 2. Find existing state
         existing_state = next((s for s in companion_active_states if s['logical_id'] == final_eid), None)
         
-        # 2. MERGE existing options with new kwargs
-        base_options = existing_state.get("options", {}).copy() if existing_state else {}
-        base_options.update(kwargs)
+        # 3. Collision Enforcement
+        if existing_state and parent_id and existing_state.get("parent_id") and existing_state.get("parent_id") != parent_id:
+            logger.warning(f"ID Collision! {final_eid} is moving from {existing_state.get('parent_id')} to {parent_id}")
         
-        # 3. Create the new state with the merged options
-        new_state = {
-            "logical_id": final_eid, 
-            "z_index": z_index, 
-            "msg": msg if msg is not None else (existing_state.get("msg") if existing_state else None), 
+        # 4. Merge Logic
+        # Start with existing state if available, otherwise empty dict
+        new_state = existing_state.copy() if existing_state else {}
+        
+        # Base updates
+        new_state.update({
+            "logical_id": final_eid,
+            "z_index": z_index,
             "effect": effect,
-            "geometry": geometry if geometry is not None else (existing_state.get("geometry") if existing_state else None), 
-            "options": base_options
-        }
+            "msg": msg if msg is not None else new_state.get("msg")
+        })
+        
+        # Preserve or update hierarchy/kind
         if parent_id: new_state["parent_id"] = parent_id
         if element_kind: new_state["element_kind"] = element_kind
         
-        # 4. Perform the update
+        # Merge Geometry
+        if geometry: new_state["geometry"] = geometry
+        
+        # Handle Options/Animation merge
+        base_options = new_state.get("options", {}).copy()
+        base_options.update(kwargs)
+        if animation:
+            base_options["animation"] = animation
+        new_state["options"] = base_options
+        
+        # 5. Perform the update: Remove old, add updated
         companion_active_states[:] = [s for s in companion_active_states if s['logical_id'] != final_eid]
         companion_active_states.append(new_state)
         
         dump_state("AFTER_SHOW_EFFECT")
         sync_deferred = True 
         return final_eid
-
     def hide_effect(logical_id):
         global companion_active_states, sync_deferred
         logger.info(f"hide_effect called: ID={logical_id}")
