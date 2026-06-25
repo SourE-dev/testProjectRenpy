@@ -1,50 +1,85 @@
 from utils import log_debug
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
-from PyQt6.QtCore import Qt, QRect
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
+from PyQt6.QtCore import Qt, QRect, QPoint, pyqtProperty
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont
 
 class MessageWindow(QWidget):
-    def __init__(self, text="", options=None):
+    def __init__(self, options=None):
         super().__init__()
         self.options = options or {}
         
-        # 1. Shell settings
+        self._canonical_pos = QPoint(0, 0)
+        self._shake_offset = QPoint(0, 0)
+        self._loop_offset = QPoint(0, 0)
+        
         self.setWindowFlags(Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         
-        # 2. Extract Styling Data
-        self.bg_color = self.options.get("bg_color", None)
-        # Handle border string (e.g., "2px solid #FFFFFF")
-        border_str = self.options.get("border", "2px solid #555555")
-        self.border_width = int(border_str.split('px')[0]) if 'px' in border_str else 2
+        self.apply_styles(self.options)
         
-        # 3. Layout setup
-        self.content_layout = QVBoxLayout(self)
-        self.content_layout.setContentsMargins(10, 10, 10, 10)
+        # REMOVED QVBoxLayout! The canvas is now a pure coordinate plane.
+
+    def apply_styles(self, options):
+        self.options = options
+        raw_color = self.options.get("bg_color", "#2e2e2e") 
+        self.bg_color = None if raw_color == "transparent" else raw_color
         
-        if text:
-            self.label = QLabel(text)
-            self.label.setStyleSheet("color: white; padding: 10px;")
-            self.content_layout.addWidget(self.label)
-        
-        log_debug(f"MessageWindow: Initialized with bg_color={self.bg_color}")
+        self.border_str = self.options.get("border", "2px solid #555555")
+        self.border_width = int(self.border_str.split('px')[0]) if 'px' in self.border_str else 2
+        self.update()
+
+    def update_window_geometry(self, x, y, w, h):
+        self._canonical_pos = QPoint(x, y)
+        self.setGeometry(x, y, w, h)
+        self._compose_absolute_position()
+        self.update()
+
+    def _compose_absolute_position(self):
+        self.move(self.canonicalPos + self._shake_offset + self._loop_offset)
+
+    @pyqtProperty(QPoint)
+    def canonicalPos(self):
+        if self._canonical_pos == QPoint(0, 0) and self.pos() != QPoint(0, 0):
+            return self.pos()
+        return self._canonical_pos
+
+    @canonicalPos.setter
+    def canonicalPos(self, point):
+        self._canonical_pos = point
+        self._compose_absolute_position()
+
+    @pyqtProperty(QPoint)
+    def shakeOffset(self): return self._shake_offset
+
+    @shakeOffset.setter
+    def shakeOffset(self, point):
+        self._shake_offset = point
+        self._compose_absolute_position()
+
+    @pyqtProperty(QPoint)
+    def loop_offset(self): return self._loop_offset
+
+    @loop_offset.setter
+    def loop_offset(self, point):
+        self._loop_offset = point
+        self._compose_absolute_position()
 
     def paintEvent(self, event):
-        """Custom painting to ensure background/border render with transparency."""
-        if not self.bg_color:
-            return
-
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
-        # Draw Background
-        rect = self.rect().adjusted(self.border_width, self.border_width, -self.border_width, -self.border_width)
-        painter.setBrush(QBrush(QColor(self.bg_color)))
-        painter.setPen(QPen(QColor("#FFFFFF"), self.border_width)) # Or extract color from border_str
-        
-        painter.drawRoundedRect(rect, 15, 15)
 
-    def update_text(self, new_text):
-        if hasattr(self, 'label'):
-            self.label.setText(new_text)
-            self.adjustSize()
+        if self.bg_color:
+            rect = self.rect().adjusted(self.border_width, self.border_width, -self.border_width, -self.border_width)
+            painter.setBrush(QBrush(QColor(self.bg_color)))
+            
+            pen_color = "#FFFFFF"
+            pen_style = Qt.PenStyle.SolidLine
+            if hasattr(self, 'border_str'):
+                if "dashed" in self.border_str:
+                    pen_style = Qt.PenStyle.DashLine
+                if "#" in self.border_str:
+                    pen_color = "#" + self.border_str.split("#")[-1]
+                    
+            painter.setPen(QPen(QColor(pen_color), self.border_width, pen_style))
+            painter.drawRoundedRect(rect, 15, 15)

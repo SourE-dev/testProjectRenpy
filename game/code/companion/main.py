@@ -68,13 +68,18 @@ class Companion(QWidget):
         # 1. Cleanup orphaned elements and containers
         for eid in list(self.scene_manager.objects.keys()):
             if eid not in target_ids:
+                log_debug(f"Companion: Cleaning up orphaned container: {eid}")
                 self.clear_single_message(eid)
         
         for child_id in list(self.child_to_parent_map.keys()):
             if child_id not in target_ids:
+                log_debug(f"Companion: Cleaning up orphaned child: {child_id}")
                 self.clear_single_message(child_id)
+
+        # 2. Sort: Process parents (no parent_id) before children
         sorted_states = sorted(target_states, key=lambda s: 0 if not s.get("parent_id") else 1)
-        # 2. Process Containers & Children
+        
+        # 3. Process Containers & Children
         for s in sorted_states:
             eid = s['logical_id']
             
@@ -85,20 +90,34 @@ class Companion(QWidget):
                 parent = self.scene_manager.objects.get(parent_id)
                 
                 if parent:
-                    # UPDATED: Always call add_element. 
-                    # Your add_element method already handles "Clean up existing if re-added",
-                    # which effectively handles updates to z_index and geometry.
+                    log_debug(f"Companion: Syncing child {eid} to parent {parent_id}")
                     parent.add_element(s)
                 else:
                     log_debug(f"Companion: Warning - Parent {parent_id} not found for {eid}")
             
             else:
-                # Handle Container (The rest of your existing logic)
+                # Handle Container
                 obj = self.scene_manager.get_or_create(eid, s.get("z_index", 0), s.get("options"))
                 obj.z_index = s.get("z_index", obj.z_index)
                 
-                if "geometry" in s: obj.update_geometry(s["geometry"])
-                if 'msg' in s: obj.update_text(s['msg'])
+
+                if "geometry" in s: 
+                    log_debug(f"Companion: Enforcing script layout overrides for {eid}")
+                    obj.update_geometry(s["geometry"]) # Explicit script bounds win!
+                
+                # Only show if not already visible (prevents repaint flicker)
+                # By calling .show() here, AFTER update_geometry, 
+                # we guarantee the window is sized correctly before the first draw.
+                if not obj.widget.isVisible():
+                    log_debug(f"Companion: Showing container {eid} after configuration.")
+                    obj.widget.show()
+                    
+                    # === ADD THIS AUDIT LAYER ===
+                    log_debug(f"=== WINDOW VISIBILITY AUDIT: {eid} ===")
+                    log_debug(f" - Actual IsVisible: {obj.widget.isVisible()}")
+                    log_debug(f" - Screen Geometry: {obj.widget.geometry()}")
+                    log_debug(f" - Target Window Flags: {int(obj.widget.windowFlags())}")
+                    log_debug(f" - Window Opacity Level: {obj.widget.windowOpacity()}")
         
         self.scene_manager.sort_and_stack_widgets()
         log_debug("Companion: Sync finished.")

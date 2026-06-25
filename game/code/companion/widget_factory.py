@@ -1,16 +1,24 @@
 from utils import log_debug
 from components import SpriteWidget, TextWidget
-# widget_factory.py
+
 class WidgetFactory:
     @staticmethod
     def create_widget(element_data, parent_widget):
         kind = element_data.get('element_kind')
         options = element_data.get('options', {})
         
-        log_debug(f"WidgetFactory: Creating {kind} with options {options}")
+        log_debug(f"WidgetFactory: Instantiating element structural type: '{kind}'")
         
         if kind == "sprite":
-            return SpriteWidget(options=options, parent=parent_widget) # This now matches the signature above
+            widget = SpriteWidget(options=options, parent=parent_widget)
+            # Example Restriction: Sprites can bounce and shift, but can't change shape
+            widget.setProperty("RESTRICT_ANIMATIONS", False)
+            return widget
+            
         elif kind == "text":
-            return TextWidget(element_data.get('msg', ''), options)
+            widget = TextWidget(element_data.get('msg', ''), options, parent=parent_widget)
+            # Horror rule: Block text blocks from executing standard scaling distortion tracks
+            widget.setProperty("RESTRICT_EFFECTS", False) 
+            return widget
+            
         return None

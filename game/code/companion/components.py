@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PyQt6.QtCore import QTimer, Qt, QRect
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QFont
 from utils import log_debug
 import os
 class BaseComponent(QWidget):
@@ -55,13 +55,30 @@ class SpriteWidget(BaseComponent):
             self.label.setPixmap(self.frames[self.current_frame])
 
 class TextWidget(BaseComponent):
-    """A simple component for text elements inside containers."""
-    def __init__(self, text, options=None):
+    """A clean typography layout element managed by the parent container layout."""
+    def __init__(self, text, options=None, parent=None):
         super().__init__(options)
+        if parent:
+            self.setParent(parent)
+            
         self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        
         self.label = QLabel(text)
-        self.label.setStyleSheet("color: white;")
+        
+        # Apply your baseline Consolas styling directly to the component label
+        font = QFont("Consolas", 14, QFont.Weight.Bold)
+        self.label.setFont(font)
+        self.label.setStyleSheet("color: #FFFFFF;")
+        self.label.setWordWrap(True)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
         self.layout.addWidget(self.label)
 
     def update_text(self, text):
         self.label.setText(text)
+        
+    def apply_styles(self, options):
+        self.options = options
+        if "msg" in options:
+            self.update_text(options["msg"])

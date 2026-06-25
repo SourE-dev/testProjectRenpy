@@ -11,6 +11,10 @@ init -1 python:
     # Constants
     EFFECT_DEFAULT = "default"
     sync_deferred = False 
+    
+    # --- EXTENSIBILITY REGISTRY ---
+    # Any key listed here will be purged from persistent state immediately after sending
+    EPHEMERAL_OPTIONS = ["animation", "shake", "glitch", "sound_cue", "force_focus"] 
     if not hasattr(renpy.store, "_companion_sync_id"):
         renpy.store._companion_sync_id = 0
 
@@ -31,28 +35,40 @@ init -1 python:
     # --- Core Communication ---
     def send_event(clear=False):
         """Sends the state with a persistent sync_id to ensure order of operations."""
-        global sync_deferred
+        global sync_deferred, companion_active_states
         
-        # Access the persistent ID that survives rollbacks
         sync_id = get_next_sync_id()
+        payload_str = ""
         
         if clear:
             logger.info(f"Attempting to send: clear_all (SyncID: {sync_id})")
             new_payload = {"event_type": "clear_all", "sync_id": sync_id}
+            payload_str = json.dumps(new_payload)
         else:
-            active_states = getattr(renpy.store, "companion_active_states", [])
-            logger.info(f"Attempting to send: update (Items: {len(active_states)}, SyncID: {sync_id})")
+            logger.info(f"Attempting to send: update (Items: {len(companion_active_states)}, SyncID: {sync_id})")
             new_payload = {
                 "event_type": "update", 
-                "data": list(active_states), 
+                "data": list(companion_active_states), 
                 "sync_id": sync_id
             }
+            
+            # 1. Serialize the payload WITH the ephemeral events included
+            payload_str = json.dumps(new_payload)
+            
+            # 2. EXTENSIBLE CLEANUP: Scrub ephemeral data from persistent state
+            for state in companion_active_states:
+                if "options" in state:
+                    for ephemeral_key in EPHEMERAL_OPTIONS:
+                        if ephemeral_key in state["options"]:
+                            # Remove it so it never fires on the next sync
+                            state["options"].pop(ephemeral_key)
+                            logger.debug(f"Purged ephemeral key '{ephemeral_key}' from {state['logical_id']}")
         
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(0.3) 
             s.connect(('127.0.0.1', 12345))
-            s.sendall(json.dumps(new_payload).encode('utf-8'))
+            s.sendall(payload_str.encode('utf-8'))
             s.close()
             logger.info(f"Successfully sent event: {new_payload.get('event_type')}")
         except Exception as e:
@@ -68,49 +84,57 @@ init -1 python:
 
     config.overlay_functions.append(run_deferred_sync)
 
-    # --- Effect Management ---
-    # --- Effect Management ---
     def show_effect(msg=None, effect=EFFECT_DEFAULT, logical_id=None, z_index=0, 
-                    parent_id=None, element_kind=None, geometry=None, animation=None, **kwargs):
+                    parent_id=None, element_kind=None, geometry=None, **kwargs):
         global companion_active_states, sync_deferred
         
-        # 1. Ensure logical_id is provided or generated
         final_eid = logical_id if logical_id else str(uuid.uuid4())
-        
-        # 2. Find existing state
         existing_state = next((s for s in companion_active_states if s['logical_id'] == final_eid), None)
         
-        # 3. Collision Enforcement
-        if existing_state and parent_id and existing_state.get("parent_id") and existing_state.get("parent_id") != parent_id:
-            logger.warning(f"ID Collision! {final_eid} is moving from {existing_state.get('parent_id')} to {parent_id}")
+        # 1. Clean decoupling & state normalization
+        if existing_state:
+            new_state = {
+                "logical_id": existing_state["logical_id"],
+                "z_index": existing_state.get("z_index", 0),
+                "effect": existing_state.get("effect", EFFECT_DEFAULT),
+                "msg": existing_state.get("msg")
+            }
+            if "parent_id" in existing_state: new_state["parent_id"] = existing_state["parent_id"]
+            if "element_kind" in existing_state: new_state["element_kind"] = existing_state["element_kind"]
+            
+            new_state["geometry"] = dict(existing_state.get("geometry", {}))
+            new_state["options"] = dict(existing_state.get("options", {}))
+            
+            # Notice we no longer need to manually pop 'animation' here, 
+            # send_event already scrubbed it on the last tick!
+            
+            if "target" in new_state["geometry"]:
+                t_x, t_y = new_state["geometry"].pop("target")
+                new_state["geometry"]["x"] = t_x
+                new_state["geometry"]["y"] = t_y
+        else:
+            new_state = {
+                "geometry": {},
+                "options": {}
+            }
         
-        # 4. Merge Logic
-        # Start with existing state if available, otherwise empty dict
-        new_state = existing_state.copy() if existing_state else {}
-        
-        # Base updates
+        # 2. Apply fresh arguments for this tick
         new_state.update({
             "logical_id": final_eid,
-            "z_index": z_index,
+            "z_index": z_index if z_index != 0 or "z_index" not in new_state else new_state["z_index"],
             "effect": effect,
-            "msg": msg if msg is not None else new_state.get("msg")
         })
-        
-        # Preserve or update hierarchy/kind
+        if msg is not None: new_state["msg"] = msg
         if parent_id: new_state["parent_id"] = parent_id
         if element_kind: new_state["element_kind"] = element_kind
+
+        if geometry:
+            new_state["geometry"].update(geometry)
+            
+        # Merge options/styling properties AND any new ephemeral events passed in via kwargs
+        new_state["options"].update(kwargs)
         
-        # Merge Geometry
-        if geometry: new_state["geometry"] = geometry
-        
-        # Handle Options/Animation merge
-        base_options = new_state.get("options", {}).copy()
-        base_options.update(kwargs)
-        if animation:
-            base_options["animation"] = animation
-        new_state["options"] = base_options
-        
-        # 5. Perform the update: Remove old, add updated
+        # 3. Swap state collection in-place
         companion_active_states[:] = [s for s in companion_active_states if s['logical_id'] != final_eid]
         companion_active_states.append(new_state)
         

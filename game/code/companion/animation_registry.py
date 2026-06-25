@@ -1,9 +1,7 @@
-# animation_registry.py
-from animation_strategies import MoveStrategy, ScaleStrategy
+from animation_strategies import MoveStrategy, ScaleStrategy, BobStrategy
 
 ANIMATION_REGISTRY = {
     "move": MoveStrategy(),
     "scale": ScaleStrategy(),
-    # Adding a new animation is now just one line:
-    # "shake": ShakeStrategy(), 
+    "bob": BobStrategy(), 
 }
