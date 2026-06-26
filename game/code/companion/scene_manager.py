@@ -28,48 +28,57 @@ class SceneManager:
     def process_packet(self, packet):
         sync_id = packet.get("sync_id", 0)
         
-        # FORCE SNAP on Rollback
-        if sync_id <= self.last_sync_id:
-            log_debug(f"Manager: Rollback detected (ID {sync_id} < {self.last_sync_id}). Forcing SNAP.")
+        # Explicit, deterministic state flags
+        is_rollback = sync_id <= self.last_sync_id
+        is_boot_frame = packet.get("is_boot", False)
+        
+        if is_rollback or is_boot_frame:
+            log_debug(f"Manager: {'First Boot Frame' if is_boot_frame else 'Rollback'} detected (ID {sync_id}). Forcing SNAP.")
             self.execute_snap(packet)
         else:
-            # Replaced execute_animation with a broader dispatcher
             self.execute_ephemeral_effects(packet)
             
+        # Removed the redundant loop engine block from here!
         self.last_sync_id = sync_id
 
     def execute_snap(self, packet):
         log_debug(f"SceneManager: Executing SNAP for packet sync_id: {packet.get('sync_id')}")
         
-        # 1. Sort: Process parents (containers) first so they exist before building children
         sorted_states = sorted(packet.get("data", []), key=lambda s: 0 if not s.get("parent_id") else 1)
         
+        # Phase A: Hard-halt old trajectories and position all elements silently
         for obj_state in sorted_states:
             eid = obj_state["logical_id"]
             geometry = obj_state.get("geometry", {})
             options = obj_state.get("options", {})
             parent_id = obj_state.get("parent_id", eid)
             
-            # 2. Get or create the underlying window track or structure
-            obj = self.get_or_create(
-                parent_id, 
-                z_index=obj_state.get("z_index", 0), 
-                options=options
-            )
-            
+            obj = self.get_or_create(parent_id, z_index=obj_state.get("z_index", 0), options=options)
             obj.stop_all_animations()
             
             if parent_id == eid:
-                # Handle Container Window Window Frame Properties
                 if hasattr(obj.widget, "apply_styles"):
                     obj.widget.apply_styles(options)
                 if geometry:
-                    obj.update_geometry(geometry)
+                    obj.update_geometry(geometry, internal_call=True)
                 if not obj.widget.isVisible():
                     obj.widget.show()
             else:
-                # Route text/sprite configuration properties downward to children
                 obj.add_element(obj_state)
+                
+        # Phase B: Re-ignite ambient loops only AFTER coordinate positioning is completely done
+        for obj_state in sorted_states:
+            eid = obj_state["logical_id"]
+            parent_id = obj_state.get("parent_id", eid)
+            
+            if parent_id == eid:
+                obj = self.objects.get(eid)
+                options = obj_state.get("options", {})
+                if obj and "loop_animation" in options and options["loop_animation"]:
+                    loop_intent = options["loop_animation"]
+                    if loop_intent.get("type") != "stop":
+                        log_debug(f"SNAP Recovery: Restoring ambient loop '{loop_intent.get('type')}' for {eid}")
+                        obj.execute_ephemeral_intents(eid, {"loop_animation": loop_intent}, obj_state.get("geometry", {}))
     def execute_ephemeral_effects(self, packet):
         """Dispatches all one-shot ephemeral intents (animations, shakes, glitches)."""
         for obj_state in packet.get("data", []):

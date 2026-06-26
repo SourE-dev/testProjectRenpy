@@ -1,12 +1,17 @@
 import random
-from PyQt6.QtCore import QPropertyAnimation, QPoint, Qt  # <-- Added Qt here
+from PyQt6.QtCore import QPropertyAnimation, QPoint, Qt
 from PyQt6.QtWidgets import QGraphicsOpacityEffect
 from utils import log_debug
+from window_base import MessageWindow
 class EffectStrategy:
+    """Base class for all non-structural visual or physical horror effects."""
     def can_execute(self, widget) -> bool:
         if widget.property("RESTRICT_EFFECTS") == True:
             return False
         return True
+
+    def matches_intent(self, active_anim, new_intent) -> bool:
+        return False # Default fallback
 
 class ShakeStrategy(EffectStrategy):
     def execute(self, widget, target_geom, intent):
@@ -36,8 +41,8 @@ class OpacityGlitchStrategy(EffectStrategy):
     def execute(self, widget, target_geom, intent):
         if not self.can_execute(widget): return None
         
-        # OS Windows animate windowOpacity natively. Child widgets use QGraphicsOpacityEffect.
-        is_top_level = widget.windowFlags() & Qt.WindowType.WindowHint
+        # NATIVE AUTO-DETECTION: Windows use windowOpacity; children use QGraphicsOpacityEffect
+        is_top_level = isinstance(widget, MessageWindow)
         
         if is_top_level:
             anim = QPropertyAnimation(widget, b"windowOpacity")

@@ -33,12 +33,22 @@ init -1 python:
             state_str = json.dumps(s, sort_keys=True)
             logger.info(f"  [{i}] Full State: {state_str}")
     # --- Core Communication ---
+    # Initialize a boot tracker flag in Ren'Py store if it doesn't exist
+    if not hasattr(renpy.store, "_companion_booted"):
+        renpy.store._companion_booted = False
+
     def send_event(clear=False):
-        """Sends the state with a persistent sync_id to ensure order of operations."""
+        """Sends the state with a persistent sync_id and explicit lifecycle flags."""
         global sync_deferred, companion_active_states
         
         sync_id = get_next_sync_id()
         payload_str = ""
+        
+        # Check if this is the absolute first data synchronization packet
+        is_boot_frame = False
+        if not renpy.store._companion_booted and not clear:
+            is_boot_frame = True
+            renpy.store._companion_booted = True # Mark it done forever
         
         if clear:
             logger.info(f"Attempting to send: clear_all (SyncID: {sync_id})")
@@ -49,20 +59,18 @@ init -1 python:
             new_payload = {
                 "event_type": "update", 
                 "data": list(companion_active_states), 
-                "sync_id": sync_id
+                "sync_id": sync_id,
+                "is_boot": is_boot_frame # <-- INJECT THE LIFECYCLE FLAG HERE
             }
             
-            # 1. Serialize the payload WITH the ephemeral events included
             payload_str = json.dumps(new_payload)
             
-            # 2. EXTENSIBLE CLEANUP: Scrub ephemeral data from persistent state
+            # EXTENSIBLE CLEANUP: Scrub ephemeral data
             for state in companion_active_states:
                 if "options" in state:
                     for ephemeral_key in EPHEMERAL_OPTIONS:
                         if ephemeral_key in state["options"]:
-                            # Remove it so it never fires on the next sync
                             state["options"].pop(ephemeral_key)
-                            logger.debug(f"Purged ephemeral key '{ephemeral_key}' from {state['logical_id']}")
         
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -148,7 +156,7 @@ init -1 python:
         
         dump_state("AFTER_HIDE_EFFECT")
         sync_deferred = True
-
+    
     def clear_all_effects():
         global companion_active_states, sync_deferred
         logger.info("clear_all_effects called")

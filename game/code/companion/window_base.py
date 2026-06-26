@@ -34,7 +34,13 @@ class MessageWindow(QWidget):
         self.setGeometry(x, y, w, h)
         self._compose_absolute_position()
         self.update()
-
+    # In window_base.py inside MessageWindow
+    def resizeEvent(self, event):
+        """Natively catches any OS or QPropertyAnimation sizing updates."""
+        super().resizeEvent(event)
+        # If a tracking scene object is hooked up, force it to reflow child positions
+        if hasattr(self, "lifecycle_owner") and self.lifecycle_owner:
+            self.lifecycle_owner.recalculate_child_layouts()
     def _compose_absolute_position(self):
         self.move(self.canonicalPos + self._shake_offset + self._loop_offset)
 
